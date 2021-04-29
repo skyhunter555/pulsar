@@ -7,8 +7,14 @@ public class PulsarConfig {
 
     private String  brokers;
     private Integer messageCount;
-    private String  topicName;
-    private String  topicInputName;
     private Integer timeoutBeforeConsume;
     private ProducerConfig producer;
+
+    private String  topicName;
+    private String  topicInputRouteName;
+    private String  topicInputFilterName;
+    private String  topicOutputOrderName;
+    private String  topicOutputInvoiceName;
+    private String  topicOutputFilterName;
+
 }

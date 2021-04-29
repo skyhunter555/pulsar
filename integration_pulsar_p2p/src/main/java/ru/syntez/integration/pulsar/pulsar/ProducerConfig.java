@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class ProducerConfig {
-
+    //TODO применить эти параметры
     private Integer retries;
     private Integer requestTimeoutMs;
     private Integer lingerMs;

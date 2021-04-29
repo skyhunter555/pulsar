@@ -121,7 +121,7 @@ public class IntegrationPulsarApplication {
             String consumerId = Integer.toString(i + 1);
             executorService.execute(() -> {
                 try {
-                    startConsumer(consumerId, withKeys);
+                    startConsumer(consumerId);
                 } catch (PulsarClientException e) {
                     e.printStackTrace();
                 }
@@ -141,7 +141,7 @@ public class IntegrationPulsarApplication {
             String consumerId = Integer.toString(i + 1);
             executorService.execute(() -> {
                 try {
-                    startConsumer(consumerId, true);
+                    startConsumer(consumerId);
                 } catch (PulsarClientException e) {
                     e.printStackTrace();
                 }
@@ -247,9 +247,9 @@ public class IntegrationPulsarApplication {
     }
 
 
-    private static void startConsumer(String consumerId, Boolean withKeys) throws PulsarClientException {
+    private static void startConsumer(String consumerId) throws PulsarClientException {
 
-        Consumer<byte[]> consumer = ConsumerCreator.createConsumer(client, config.getTopicName(), consumerId, withKeys);
+        Consumer<byte[]> consumer = ConsumerCreator.createConsumer(client, config.getTopicName(), consumerId);
 
         while (msg_received_counter.get() < config.getMessageCount()) {
             Message message = consumer.receive(1, TimeUnit.SECONDS);

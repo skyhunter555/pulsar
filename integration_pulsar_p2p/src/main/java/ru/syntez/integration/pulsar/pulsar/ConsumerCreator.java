@@ -5,21 +5,24 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.SubscriptionType;
 
+import java.util.logging.Logger;
+
 public class ConsumerCreator {
 
-    private static final String SUBSCRIPTION_NAME = "shared-demo";
-    private static final String SUBSCRIPTION_KEY_NAME = "key-shared-demo";
+    private final static Logger LOG = Logger.getLogger(ru.syntez.integration.pulsar.IntegrationPulsarApplication.class.getName());
 
-    public static Consumer<byte[]> createConsumer(PulsarClient pulsarClient, String topicName, String consumerId, Boolean withKeys) throws PulsarClientException {
-
+    public static Consumer<byte[]> createConsumer(
+            PulsarClient pulsarClient,
+            String topicName,
+            String consumerId,
+            String subscriptionName,
+            Boolean withKeys
+    ) throws PulsarClientException {
         SubscriptionType subscriptionType;
-        String subscriptionName;
         if (withKeys) {
             subscriptionType = SubscriptionType.Key_Shared;
-            subscriptionName = SUBSCRIPTION_KEY_NAME;
         } else {
             subscriptionType = SubscriptionType.Shared;
-            subscriptionName = SUBSCRIPTION_NAME;
         }
         Consumer<byte[]> consumer = pulsarClient.newConsumer()
                 .consumerName(consumerId)
@@ -27,6 +30,10 @@ public class ConsumerCreator {
                 .subscriptionType(subscriptionType)
                 .subscriptionName(subscriptionName)
                 .subscribe();
+
+        LOG.info(String.format("Consumer created: ID=%s; TOPIC=%s; subscriptionType=%s; subscriptionName=%s",
+                consumerId, topicName, subscriptionType, subscriptionName));
+
         return consumer;
     }
 

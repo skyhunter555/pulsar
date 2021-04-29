@@ -38,12 +38,10 @@ public class IntegrationPulsarApplication {
     private static AtomicInteger msg_received_counter = new AtomicInteger(0);
     private static ru.syntez.integration.pulsar.pulsar.PulsarConfig config;
     private static Map<String, Set<String>> consumerRecordSetMap = new ConcurrentHashMap<>();
-
-    private final static String TOPIC_OUTPUT = "topic-output-demo";
-    private final static String TOPIC_OUTPUT_ORDER = "topic-output-order-demo";
-    private final static String TOPIC_OUTPUT_INVOICE = "topic-output-invoice-demo";
-
     private static PulsarClient client;
+
+    private static final String SUBSCRIPTION_NAME = "shared-demo";
+    private static final String SUBSCRIPTION_KEY_NAME = "key-shared-demo";
 
     private static ObjectMapper xmlMapper() {
         JacksonXmlModule xmlModule = new JacksonXmlModule();
@@ -70,33 +68,34 @@ public class IntegrationPulsarApplication {
                     .serviceUrl(config.getBrokers())
                     .build();
 
-            //кейс ATLEAST_ONCE
-           LOG.info("Запуск проверки гарантии доставки ATLEAST_ONCE...");
-           runConsumersWithoutTimeout(3, false, false);
-           LOG.info("Проверка гарантии доставки ATLEAST_ONCE завершена.");
-           ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
-           resetResults();
+             //кейс ATLEAST_ONCE
+            LOG.info("Запуск проверки гарантии доставки ATLEAST_ONCE...");
+            runConsumersWithoutTimeout(3, false, false);
+            LOG.info("Проверка гарантии доставки ATLEAST_ONCE завершена.");
+            ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
+            resetResults();
 
-           //кейс ATMOST_ONCE
-           LOG.info("Запуск проверки гарантии доставки ATMOST_ONCE...");
-           runConsumersWithoutTimeout(3, true, false);
-           LOG.info("Проверка гарантии доставки ATMOST_ONCE завершена.");
-           ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
-           resetResults();
+            //кейс ATMOST_ONCE
+            LOG.info("Запуск проверки гарантии доставки ATMOST_ONCE...");
+            runConsumersWithoutTimeout(3, true, false);
+            LOG.info("Проверка гарантии доставки ATMOST_ONCE завершена.");
+            ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
+            resetResults();
 
-           //кейс EFFECTIVELY_ONCE
-           LOG.info("Запуск проверки гарантии доставки EFFECTIVELY_ONCE + дедупликация...");
-           runConsumersWithoutTimeout(3, true, true);
-           LOG.info("Проверка гарантии доставки EFFECTIVELY_ONCE + дедупликация завершена.");
-           ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
-           resetResults();
+            //кейс EFFECTIVELY_ONCE
+            // TODO сделать отдельное пространство имен с топиком
+            LOG.info("Запуск проверки гарантии доставки EFFECTIVELY_ONCE + дедупликация...");
+            runConsumersWithoutTimeout(3, true, true);
+            LOG.info("Проверка гарантии доставки EFFECTIVELY_ONCE + дедупликация завершена.");
+            ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
+            resetResults();
 
-           //кейс TTL
-           LOG.info("Запуск проверки TTL...");
-           runConsumersWithTimeout(3);
-           LOG.info("Проверка TTL завершена.");
-           ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
-           resetResults();
+            //кейс TTL
+            LOG.info("Запуск проверки TTL...");
+            runConsumersWithTimeout(3);
+            LOG.info("Проверка TTL завершена.");
+            ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
+            resetResults();
 
             //кейс Routing
             LOG.info(String.format("Запуск проверки Routing...", msg_sent_counter.get()));
@@ -130,14 +129,20 @@ public class IntegrationPulsarApplication {
         ExecutorService executorService = Executors.newFixedThreadPool(3);
         executorService.execute(() -> {
             try {
-                runProducerWithKeys(config.getTopicName());
+                runProducerWithKeys(config.getTopicInputFilterName());
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
         executorService.execute(() -> {
             try {
-                startConsumer(ConsumerCreator.createConsumer(client, TOPIC_OUTPUT, "1", true));
+                String consumerId = "filter";
+                Consumer consumer = ConsumerCreator.createConsumer(
+                        client, config.getTopicOutputFilterName(), consumerId,
+                        String.format("%s_%s", SUBSCRIPTION_KEY_NAME, consumerId),
+                        true);
+                startConsumer(consumer);
+                consumer.close();
             } catch (PulsarClientException e) {
                 e.printStackTrace();
             }
@@ -156,15 +161,35 @@ public class IntegrationPulsarApplication {
         ExecutorService executorService = Executors.newFixedThreadPool(3);
         executorService.execute(() -> {
             try {
-                runProducerWithKeys(config.getTopicInputName());
+                runProducerWithKeys(config.getTopicInputRouteName());
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
         executorService.execute(() -> {
             try {
-                startConsumer(ConsumerCreator.createConsumer(client, TOPIC_OUTPUT_ORDER, "1", false));
-                startConsumer(ConsumerCreator.createConsumer(client, TOPIC_OUTPUT_INVOICE, "2", false));
+                String consumerId = "order";
+                Consumer consumer = ConsumerCreator.createConsumer(
+                        client, config.getTopicOutputOrderName(), consumerId,
+                        String.format("%s_%s", SUBSCRIPTION_KEY_NAME, consumerId),
+                        true
+                );
+                startConsumer(consumer);
+               // consumer.close();
+            } catch (PulsarClientException e) {
+                e.printStackTrace();
+            }
+        });
+        executorService.execute(() -> {
+            try {
+                String consumerId = "invoice";
+                Consumer consumer = ConsumerCreator.createConsumer(
+                        client, config.getTopicOutputInvoiceName(), consumerId,
+                        String.format("%s_%s", SUBSCRIPTION_KEY_NAME, consumerId),
+                        true
+                );
+                startConsumer(consumer);
+               // consumer.close();
             } catch (PulsarClientException e) {
                 e.printStackTrace();
             }
@@ -202,10 +227,19 @@ public class IntegrationPulsarApplication {
         for (int i = 0; i < consumerCount; i++) {
             String consumerId = Integer.toString(i + 1);
             executorService.execute(() -> {
+                Consumer consumer = null;
                 try {
-                    startConsumer(consumerId, withKeys);
+                    consumer = createAndStartConsumer(consumerId, withKeys);
                 } catch (PulsarClientException e) {
                     e.printStackTrace();
+                } finally {
+                    if (consumer != null) {
+                        try {
+                            consumer.close();
+                        } catch (PulsarClientException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             });
         }
@@ -234,10 +268,19 @@ public class IntegrationPulsarApplication {
         for (int i = 0; i < consumerCount; i++) {
             String consumerId = Integer.toString(i + 1);
             executorService.execute(() -> {
+                Consumer consumer = null;
                 try {
-                    startConsumer(consumerId, true);
+                    consumer = createAndStartConsumer(consumerId, true);
                 } catch (PulsarClientException e) {
                     e.printStackTrace();
+                } finally {
+                    if (consumer != null) {
+                        try {
+                            consumer.close();
+                        } catch (PulsarClientException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             });
         }
@@ -346,10 +389,21 @@ public class IntegrationPulsarApplication {
         }
     }
 
-    private static void startConsumer(String consumerId, Boolean withKeys) throws PulsarClientException {
-        Consumer<byte[]> consumer = ConsumerCreator.createConsumer(client, config.getTopicName(), consumerId, withKeys);
+    private static Consumer createAndStartConsumer(String consumerId, Boolean withKeys) throws PulsarClientException {
+        String subscriptionName;
+        if (withKeys) {
+            subscriptionName = SUBSCRIPTION_KEY_NAME;
+        } else {
+            subscriptionName = SUBSCRIPTION_NAME;
+        }
+        Consumer<byte[]> consumer = ConsumerCreator.createConsumer(
+                client,
+                config.getTopicName(),
+                consumerId,
+                subscriptionName,
+                withKeys);
         startConsumer(consumer);
-        consumer.close();
+        return consumer;
     }
 
     private static void startConsumer(Consumer<byte[]> consumer) throws PulsarClientException {
