@@ -1,0 +1,12 @@
+#default config value
+brokers: "pulsar://192.168.56.101:6650"
+messageCount: 1000
+topicName: "topic-part6-demo"
+topicInputName: "topic-input-demo"
+timeoutBeforeConsume: 3
+producer:
+  retries: 3
+  requestTimeoutMs: 230
+  lingerMs: 20
+  deliveryTimeoutMs: 1000
+
