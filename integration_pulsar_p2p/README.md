@@ -32,6 +32,8 @@ sudo ./pulsar-admin namespaces set-deduplication public/namespace-demo --enable 
 Сообщения отправляются одним продюсером в топик topic-part6-demo без вычитывания.
 Спустя 3 минуты сообщения вычитываются тремя косьюмерами с помощью SHARED подписки.
 После превышения времени 2 минуты сообщения помечаются как удаленные и не должны быть вычитаны.
+При этом необходимо настроить частоту проверки у брокера:
+messageExpiryCheckIntervalInMinutes = 60 сек
 
 Настройка TTL для пространства имен:
 sudo ./pulsar-admin namespaces set-message-ttl public/namespace-demo --messageTTL 120 
@@ -47,14 +49,39 @@ topic-output-order-demo и topic-output-invoice-demo.
     в) Фильтрация сообщений в зависимости от содержания.
        FilterByBodyDemoFunction
 
-Создание функции:
-bin/pulsar-admin functions create \
-  --jar target/integration-pulsar-p2p-1.0.0.jar \
-  --classname ru.syntez.integration.pulsar.functions.RoutingByKeyDemoFunction \
-  --tenant public \
-  --namespace namespace-demo \
-  --name by-key-demo \
-  --inputs persistent://public/namespace-demo/topic-input-demo 
+#Создание функции:
+Для загрузки функци необходимо пометить jar примера в папку apache-pulsar-2.7.1/lib
+и выполнить комманду загрузки для каждой функции
+
+sudo ./pulsar-admin functions create \
+--jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-p2p-1.0.0.jar \
+--classname ru.syntez.integration.pulsar.functions.RoutingByKeyDemoFunction \ 
+--tenant public \ 
+--namespace default \
+--name routingByKey \
+--inputs persistent://public/default/topic-input-route-demo
+
+sudo ./pulsar-admin functions create \
+--jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-p2p-1.0.0.jar \
+--classname ru.syntez.integration.pulsar.functions.FilterByKeyDemoFunction \
+--tenant public \ 
+--namespace default \
+--name filterByKey \
+--inputs persistent://public/default/topic-input-filter-demo
+
+sudo ./pulsar-admin functions create \
+--jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-p2p-1.0.0.jar \
+--classname ru.syntez.integration.pulsar.functions.RoutingByBodyDemoFunction \
+--tenant public \ 
+--namespace default \
+--name routingByBody \
+--inputs persistent://public/default/topic-input-route-demo
+
+Удаление функции:
+sudo ./pulsar-admin functions delete \
+--tenant public \
+--namespace default \
+--name routingByKey  
 
 # Установка и настройка Apache Pulsar для linux:
 https://pulsar.apache.org/docs/en/2.4.0/standalone/
@@ -80,23 +107,6 @@ pulsar-admin namespaces create public/namespace-demo
 1 Для первых 4 кейсов
 pulsar-admin topics create-partitioned-topic \
   persistent://public/namespace-demo/topic-part6-demo \
-  --partitions 6
-
-2 Для 5 кейса  
-pulsar-admin topics create-partitioned-topic \
-  persistent://public/namespace-demo/topic-input-demo \
-  --partitions 6
-
-pulsar-admin topics create-partitioned-topic \
-  persistent://public/namespace-demo/topic-output-order-demo \
-  --partitions 6
-  
-pulsar-admin topics create-partitioned-topic \
-  persistent://public/namespace-demo/topic-output-invoice-demo \
-  --partitions 6      
-
-pulsar-admin topics create-partitioned-topic \
-  persistent://public/namespace-demo/topic-output-invoice-demo \
   --partitions 6
   
 ## Build
