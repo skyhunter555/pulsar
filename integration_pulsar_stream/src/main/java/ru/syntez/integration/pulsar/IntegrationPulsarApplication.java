@@ -69,26 +69,25 @@ public class IntegrationPulsarApplication {
                     .build();
 
              //кейс Применение преобразования формата сообщения в реальном времени в потоковом режиме.
-            LOG.info("Запуск проверки гарантии доставки ATLEAST_ONCE...");
-            runConsumersWithoutTimeout(3, false, false);
-            LOG.info("Проверка гарантии доставки ATLEAST_ONCE завершена.");
+            LOG.info("Запуск проверки преобразования формата сообщения...");
+            runConsumersWithTransform();
+            LOG.info("Проверка преобразования формата сообщения завершена.");
             ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
             resetResults();
 
             //кейс Агрегация по 100 сообщений из одного топика с целью получения единого сообщения содержащего данные всех переданных сообщений.
             //Агрегация сообщений из разных топиков.
-            LOG.info("Запуск проверки гарантии доставки ATMOST_ONCE...");
-            runConsumersWithoutTimeout(3, true, false);
-            LOG.info("Проверка гарантии доставки ATMOST_ONCE завершена.");
+            LOG.info("Запуск проверки агрегации по 100 сообщений...");
+            runConsumersWithAggregationByCount();
+            LOG.info("Проверка агрегации по 100 сообщений завершена.");
             ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
             resetResults();
 
             //кейс Событие в формате JSON содержит поле целое числовое поле amount
-            //Рассчитать сумму по полю amouunt за последнюю минуту
-            // TODO сделать отдельное пространство имен с топиком
-            LOG.info("Запуск проверки гарантии доставки EFFECTIVELY_ONCE + дедупликация...");
-            runConsumersWithoutTimeout(3, true, true);
-            LOG.info("Проверка гарантии доставки EFFECTIVELY_ONCE + дедупликация завершена.");
+            //Рассчитать сумму по полю amount за последнюю минуту
+            LOG.info("Запуск проверки агрегации за последнюю минуту...");
+            runConsumersWithAggregationByTime();
+            LOG.info("Проверка агрегации за последнюю минуту завершена.");
             ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
             resetResults();
 
@@ -106,39 +105,12 @@ public class IntegrationPulsarApplication {
         consumerRecordSetMap = new ConcurrentHashMap<>();
     }
 
-    private static void runConsumersWithFilter() throws InterruptedException {
-        ExecutorService executorService = Executors.newFixedThreadPool(3);
-        executorService.execute(() -> {
-            try {
-                runProducerWithKeys(config.getTopicInputFilterName());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        executorService.execute(() -> {
-            try {
-                String consumerId = "filter";
-                Consumer consumer = ConsumerCreator.createConsumer(
-                        client, config.getTopicOutputFilterName(), consumerId,
-                        String.format("%s_%s", SUBSCRIPTION_KEY_NAME, consumerId),
-                        true);
-                startConsumer(consumer);
-                consumer.close();
-            } catch (PulsarClientException e) {
-                e.printStackTrace();
-            }
-        });
-        executorService.shutdown();
-        //Минуты должно хватить на обработку всех сообщений
-        executorService.awaitTermination(1, TimeUnit.MINUTES);
-    }
-
     /**
-     * Запуск обработки сообщений после маршрутизации
+     * Запуск обработки сообщений после трансформации
      *
      * @throws InterruptedException
      */
-    private static void runConsumersWithRouting() throws InterruptedException {
+    private static void runConsumersWithTransform() throws InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(3);
         executorService.execute(() -> {
             try {
@@ -180,123 +152,61 @@ public class IntegrationPulsarApplication {
         executorService.awaitTermination(1, TimeUnit.MINUTES);
     }
 
-    /**
-     * Запуск одновременной обработки
-     *
-     * @param consumerCount - количество консьюмеров
-     * @param withKeys      - флаг генерации ключей сообщений
-     * @param withVersions  - флаг генерации нескольких сообщений для одного ключа
-     * @throws InterruptedException
-     */
-    private static void runConsumersWithoutTimeout(Integer consumerCount, Boolean withKeys, Boolean withVersions) throws InterruptedException {
-        ExecutorService executorService = Executors.newFixedThreadPool(consumerCount + 1);
-        if (withKeys) {
-            if (withVersions) {
-                executorService.execute(ru.syntez.integration.pulsar.IntegrationPulsarApplication::runProducerWithVersions);
-            } else {
-                executorService.execute(() -> {
-                    try {
-                        runProducerWithKeys(config.getTopicName());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                });
-            }
-        } else {
-            executorService.execute(ru.syntez.integration.pulsar.IntegrationPulsarApplication::runProducerWithoutKeys);
-        }
-        for (int i = 0; i < consumerCount; i++) {
-            String consumerId = Integer.toString(i + 1);
-            executorService.execute(() -> {
-                Consumer consumer = null;
-                try {
-                    consumer = createAndStartConsumer(consumerId, withKeys);
-                } catch (PulsarClientException e) {
-                    e.printStackTrace();
-                } finally {
-                    if (consumer != null) {
-                        try {
-                            consumer.close();
-                        } catch (PulsarClientException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            });
-        }
-        executorService.shutdown();
-        //Минуты должно хватить на обработку всех сообщений
-        executorService.awaitTermination(1, TimeUnit.MINUTES);
-    }
-
-    /**
-     * Запуск обработки через время после записи
-     *
-     * @param consumerCount
-     * @throws InterruptedException
-     */
-    private static void runConsumersWithTimeout(Integer consumerCount) throws InterruptedException {
-        ExecutorService executorService = Executors.newFixedThreadPool(consumerCount + 1);
+    private static void runConsumersWithAggregationByCount() throws InterruptedException {
+        ExecutorService executorService = Executors.newFixedThreadPool(3);
         executorService.execute(() -> {
             try {
-                runProducerWithKeys(config.getTopicName());
+                runProducerWithKeys(config.getTopicInputGroupName());
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
-        executorService.awaitTermination(config.getTimeoutBeforeConsume(), TimeUnit.MINUTES);
-
-        for (int i = 0; i < consumerCount; i++) {
-            String consumerId = Integer.toString(i + 1);
-            executorService.execute(() -> {
-                Consumer consumer = null;
-                try {
-                    consumer = createAndStartConsumer(consumerId, true);
-                } catch (PulsarClientException e) {
-                    e.printStackTrace();
-                } finally {
-                    if (consumer != null) {
-                        try {
-                            consumer.close();
-                        } catch (PulsarClientException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            });
-        }
+        executorService.execute(() -> {
+            try {
+                String consumerId = "filter";
+                Consumer consumer = ConsumerCreator.createConsumer(
+                        client, config.getTopicOutputGroupName(), consumerId,
+                        String.format("%s_%s", SUBSCRIPTION_KEY_NAME, consumerId),
+                        true);
+                startConsumer(consumer);
+                consumer.close();
+            } catch (PulsarClientException e) {
+                e.printStackTrace();
+            }
+        });
         executorService.shutdown();
         //Минуты должно хватить на обработку всех сообщений
         executorService.awaitTermination(1, TimeUnit.MINUTES);
-
     }
 
-    /**
-     * Отправка сообщений без ключа для первого кейса - проверка гарантии at-least-once
-     * TODO выделить в отдельный юзкейс
-     */
-    private static void runProducerWithoutKeys() {
-        RoutingDocument document = loadDocument();
-        try {
-            Producer<byte[]> producer = client.newProducer()
-                    .topic(config.getTopicName())
-                    .compressionType(CompressionType.LZ4)
-                    .create();
-            for (int index = 0; index < config.getMessageCount(); index++) {
-                document.setDocId(index);
-                document.setDocType(DocumentTypeEnum.invoice);
-                byte[] msgValue = xmlMapper().writeValueAsString(document).getBytes();
-                producer.newMessage().value(msgValue).send();
-                msg_sent_counter.incrementAndGet();
-                //LOG.info("Send message " + index);
+    private static void runConsumersWithAggregationByTime() throws InterruptedException {
+        ExecutorService executorService = Executors.newFixedThreadPool(3);
+        executorService.execute(() -> {
+            try {
+                runProducerWithKeys(config.getTopicInputGroupName());
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            producer.flush();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        });
+        executorService.execute(() -> {
+            try {
+                String consumerId = "filter";
+                Consumer consumer = ConsumerCreator.createConsumer(
+                        client, config.getTopicOutputGroupName(), consumerId,
+                        String.format("%s_%s", SUBSCRIPTION_KEY_NAME, consumerId),
+                        true);
+                startConsumer(consumer);
+                consumer.close();
+            } catch (PulsarClientException e) {
+                e.printStackTrace();
+            }
+        });
+        executorService.shutdown();
+        //Минуты должно хватить на обработку всех сообщений
+        executorService.awaitTermination(1, TimeUnit.MINUTES);
     }
 
-    /**
+     /**
      * Отправка сообщений с уникальным ключом для второго кейса - проверка гарантии at-most-once
      * TODO выделить в отдельный юзкейс
      */
@@ -326,65 +236,6 @@ public class IntegrationPulsarApplication {
         producer.flush();
         LOG.info(String.format("Количество отправленных уникальных сообщений: %s", msg_sent_counter.get()));
 
-    }
-
-    /**
-     * Генерация сообщений с тремя версиями на один ключ
-     * TODO выделить в отдельный юзкейс
-     */
-    private static void runProducerWithVersions() {
-        RoutingDocument document = loadDocument();
-        try {
-            Producer<byte[]> producer = client.newProducer()
-                    .topic(config.getTopicName())
-                    .compressionType(CompressionType.LZ4)
-                    .create();
-            Map<Integer, String> keyMap = new HashMap<>();
-            for (int index = 0; index < config.getMessageCount(); index++) {
-                document.setDocId(index);
-                document.setDocType(DocumentTypeEnum.unknown);
-                String keyValue = getMessageKey(index, KeyTypeEnum.NUMERIC);
-                keyMap.put(index, keyValue);
-                byte[] msgValue = xmlMapper().writeValueAsString(document).getBytes();
-                producer.newMessage().key(keyValue).value(msgValue).send();
-                msg_sent_counter.incrementAndGet();
-            }
-
-            for (int index = 0; index < config.getMessageCount(); index++) {
-                document.setDocId(index);
-                document.setDocType(DocumentTypeEnum.order);
-                byte[] msgValue = xmlMapper().writeValueAsString(document).getBytes();
-                producer.newMessage().key(keyMap.get(index)).value(msgValue).send();
-                msg_sent_counter.incrementAndGet();
-            }
-
-            for (int index = 0; index < config.getMessageCount(); index++) {
-                document.setDocId(index);
-                document.setDocType(DocumentTypeEnum.invoice);
-                byte[] msgValue = xmlMapper().writeValueAsString(document).getBytes();
-                producer.newMessage().key(keyMap.get(index)).value(msgValue).send();
-                msg_sent_counter.incrementAndGet();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static Consumer createAndStartConsumer(String consumerId, Boolean withKeys) throws PulsarClientException {
-        String subscriptionName;
-        if (withKeys) {
-            subscriptionName = SUBSCRIPTION_KEY_NAME;
-        } else {
-            subscriptionName = SUBSCRIPTION_NAME;
-        }
-        Consumer<byte[]> consumer = ConsumerCreator.createConsumer(
-                client,
-                config.getTopicName(),
-                consumerId,
-                subscriptionName,
-                withKeys);
-        startConsumer(consumer);
-        return consumer;
     }
 
     private static void startConsumer(Consumer<byte[]> consumer) throws PulsarClientException {
@@ -426,7 +277,12 @@ public class IntegrationPulsarApplication {
     }
 
     private static RoutingDocument loadDocument() {
-        String messageXml = "<?xml version=\"1.0\" encoding=\"windows-1251\"?><routingDocument><docId>1</docId><docType>order</docType></routingDocument>";
+        String messageXml = "<?xml version=\"1.0\" encoding=\"windows-1251\"?>\n" +
+                "<OutputDocumentExt>\n" +
+                "  <documentId>1</documentId>\n" +
+                "  <documentType>order</documentType>\n" +
+                "  <documentNumber>123</documentNumber>\n" +
+                "</OutputDocumentExt>";
         RoutingDocument document;
         try {
             document = xmlMapper().readValue(messageXml, RoutingDocument.class);

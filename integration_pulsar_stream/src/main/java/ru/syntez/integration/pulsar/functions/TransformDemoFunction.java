@@ -1,5 +1,6 @@
 package ru.syntez.integration.pulsar.functions;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule;
@@ -9,13 +10,13 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.functions.api.Context;
 import org.apache.pulsar.functions.api.Function;
-
-import java.util.HashMap;
-import java.util.Map;
+import ru.syntez.integration.pulsar.processor.MapStructConverter;
+import ru.syntez.integration.pulsar.processor.entities.OutputDocumentExt;
 
 public class TransformDemoFunction implements Function<String, Void> {
 
-    private final String TOPIC_OUTPUT = "topic-output-demo";
+    private final String TOPIC_OUTPUT_ORDER = "topic-output-order-demo";
+    private final String TOPIC_OUTPUT_INVOICE = "topic-output-invoice-demo";
     private ObjectMapper xmlMapper;
 
     private void initXMLMapper() {
@@ -29,26 +30,45 @@ public class TransformDemoFunction implements Function<String, Void> {
     @Override
     public Void process(String input, Context context) {
 
-        Map<String, String> properties = new HashMap<>();
-        properties.put("input_topic", context.getCurrentRecord().getTopicName().get());
-        properties.putAll(context.getCurrentRecord().getProperties());
+        initXMLMapper();
+
+        //context.getLogger().info("RoutingByKeyDemoFunction check!!! context:" + context.toString());
+        OutputDocumentExt outputDocumentExt;
+        try {
+            outputDocumentExt = xmlMapper.readValue((String) context.getCurrentRecord().getValue(), OutputDocumentExt.class);
+        } catch (Exception ex) {
+            context.getLogger().error("Failed to read XML string: " + ex.getMessage());
+            return null;
+        }
         try {
             if (context.getCurrentRecord().getKey().isPresent()) {
                 String messageKey = context.getCurrentRecord().getKey().get();
-                context.getLogger().info(
-                        "Topic message with key \"" + messageKey + "\" and message value \"" + context.getCurrentRecord().getValue() + "\" routing"
-                );
-                if (messageKey.toUpperCase().startsWith("ORDER")) {
-                    context.newOutputMessage(TOPIC_OUTPUT, Schema.BYTES)
+                context.getLogger().info(String.format(
+                        "message TOPIC=%s; KEY=%s; VALUE=%s routing...",
+                        context.getCurrentRecord().getTopicName().get(),
+                        messageKey,
+                        context.getCurrentRecord().getValue()
+                ));
+                if (outputDocumentExt.getDocumentType().equals("order")) {
+                    String orderDocument = xmlMapper.writeValueAsString(MapStructConverter.MAPPER.convertOrder(outputDocumentExt));
+                    context.newOutputMessage(TOPIC_OUTPUT_ORDER, Schema.BYTES)
                             .key(messageKey)
-                            .value(((String) context.getCurrentRecord().getValue()).getBytes())
+                            .value(orderDocument.getBytes())
+                            .send();
+                } else if (outputDocumentExt.getDocumentType().equals("invoice")) {
+                    String invoiceDocument = xmlMapper.writeValueAsString(MapStructConverter.MAPPER.convertInvoice(outputDocumentExt));
+                    context.newOutputMessage(TOPIC_OUTPUT_INVOICE, Schema.BYTES)
+                            .key(messageKey)
+                            .value(invoiceDocument.getBytes())
                             .send();
                 }
             }
-        } catch (PulsarClientException e) {
+        } catch (PulsarClientException | JsonProcessingException e) {
             context.getLogger().error(e.toString());
         }
         return null;
     }
 
 }
+
+

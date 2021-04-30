@@ -1,13 +1,19 @@
-package ru.syntez.processors.compose.processor;
+package ru.syntez.integration.pulsar.processor;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
-import ru.syntez.processors.compose.processor.entities.InvoiceDocument;
-import ru.syntez.processors.compose.processor.entities.OrderDocument;
-import ru.syntez.processors.compose.processor.entities.OutputDocumentExt;
+import ru.syntez.integration.pulsar.processor.entities.InvoiceDocument;
+import ru.syntez.integration.pulsar.processor.entities.OrderDocument;
+import ru.syntez.integration.pulsar.processor.entities.OutputDocumentExt;
 
+/**
+ * MapStructConverter
+ *
+ * @author Skyhunter
+ * @date 30.04.2021
+ */
 @Mapper
 public interface MapStructConverter {
 

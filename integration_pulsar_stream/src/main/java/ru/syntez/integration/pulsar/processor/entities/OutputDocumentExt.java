@@ -1,4 +1,4 @@
-package ru.syntez.processors.compose.processor.entities;
+package ru.syntez.integration.pulsar.processor.entities;
 
 import lombok.Data;
 import javax.xml.bind.annotation.XmlAccessType;
