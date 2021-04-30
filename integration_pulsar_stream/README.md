@@ -57,7 +57,7 @@ namespaces = public/default
 
 sudo ./pulsar-admin functions create \
 --jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-p2p-1.0.0.jar \
---classname ru.syntez.integration.pulsar.functions.RoutingByKeyDemoFunction \ 
+--classname ru.syntez.integration.pulsar.functions.AggregationByCountDemoFunction \ 
 --tenant public \ 
 --namespace default \
 --name routingByKey \
@@ -65,7 +65,7 @@ sudo ./pulsar-admin functions create \
 
 sudo ./pulsar-admin functions create \
 --jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-p2p-1.0.0.jar \
---classname ru.syntez.integration.pulsar.functions.FilterByKeyDemoFunction \
+--classname ru.syntez.integration.pulsar.functions.TransformDemoFunction \
 --tenant public \ 
 --namespace default \
 --name filterByKey \
@@ -73,7 +73,7 @@ sudo ./pulsar-admin functions create \
 
 sudo ./pulsar-admin functions create \
 --jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-p2p-1.0.0.jar \
---classname ru.syntez.integration.pulsar.functions.RoutingByBodyDemoFunction \
+--classname ru.syntez.integration.pulsar.functions.AggregationByTimeDemoFunction \
 --tenant public \ 
 --namespace default \
 --name routingByBody \
