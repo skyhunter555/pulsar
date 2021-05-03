@@ -1,12 +1,12 @@
-package ru.syntez.integration.pulsar.processor;
+package ru.syntez.integration.pulsar.functions;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
-import ru.syntez.integration.pulsar.processor.entities.InvoiceDocument;
-import ru.syntez.integration.pulsar.processor.entities.OrderDocument;
-import ru.syntez.integration.pulsar.processor.entities.OutputDocumentExt;
+import ru.syntez.integration.pulsar.entities.InvoiceDocument;
+import ru.syntez.integration.pulsar.entities.OrderDocument;
+import ru.syntez.integration.pulsar.entities.OutputDocumentExt;
 
 /**
  * MapStructConverter

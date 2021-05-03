@@ -9,6 +9,7 @@ import org.apache.pulsar.client.api.*;
 import org.yaml.snakeyaml.Yaml;
 import ru.syntez.integration.pulsar.entities.DocumentTypeEnum;
 import ru.syntez.integration.pulsar.entities.KeyTypeEnum;
+import ru.syntez.integration.pulsar.entities.OutputDocumentExt;
 import ru.syntez.integration.pulsar.entities.RoutingDocument;
 import ru.syntez.integration.pulsar.exceptions.TestMessageException;
 import ru.syntez.integration.pulsar.pulsar.ConsumerCreator;
@@ -40,7 +41,6 @@ public class IntegrationPulsarApplication {
     private static Map<String, Set<String>> consumerRecordSetMap = new ConcurrentHashMap<>();
     private static PulsarClient client;
 
-    private static final String SUBSCRIPTION_NAME = "shared-demo";
     private static final String SUBSCRIPTION_KEY_NAME = "key-shared-demo";
 
     private static ObjectMapper xmlMapper() {
@@ -77,19 +77,19 @@ public class IntegrationPulsarApplication {
 
             //кейс Агрегация по 100 сообщений из одного топика с целью получения единого сообщения содержащего данные всех переданных сообщений.
             //Агрегация сообщений из разных топиков.
-            LOG.info("Запуск проверки агрегации по 100 сообщений...");
-            runConsumersWithAggregationByCount();
-            LOG.info("Проверка агрегации по 100 сообщений завершена.");
-            ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
-            resetResults();
+           //LOG.info("Запуск проверки агрегации по 100 сообщений...");
+           //runConsumersWithAggregationByCount();
+           //LOG.info("Проверка агрегации по 100 сообщений завершена.");
+           //ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
+           //resetResults();
 
-            //кейс Событие в формате JSON содержит поле целое числовое поле amount
-            //Рассчитать сумму по полю amount за последнюю минуту
-            LOG.info("Запуск проверки агрегации за последнюю минуту...");
-            runConsumersWithAggregationByTime();
-            LOG.info("Проверка агрегации за последнюю минуту завершена.");
-            ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
-            resetResults();
+           ////кейс Событие в формате JSON содержит поле целое числовое поле amount
+           ////Рассчитать сумму по полю amount за последнюю минуту
+           //LOG.info("Запуск проверки агрегации за последнюю минуту...");
+           //runConsumersWithAggregationByTime();
+           //LOG.info("Проверка агрегации за последнюю минуту завершена.");
+           //ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
+           //resetResults();
 
             client.close();
         } catch (Exception e) {
@@ -114,35 +114,35 @@ public class IntegrationPulsarApplication {
         ExecutorService executorService = Executors.newFixedThreadPool(3);
         executorService.execute(() -> {
             try {
-                runProducerWithKeys(config.getTopicInputRouteName());
+                runProducerWithKeys(config.getTopicInputName());
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
         executorService.execute(() -> {
             try {
-                String consumerId = "order";
+                String consumerId = DocumentTypeEnum.order.name();
                 Consumer consumer = ConsumerCreator.createConsumer(
                         client, config.getTopicOutputOrderName(), consumerId,
                         String.format("%s_%s", SUBSCRIPTION_KEY_NAME, consumerId),
                         true
                 );
                 startConsumer(consumer);
-               // consumer.close();
+                consumer.close();
             } catch (PulsarClientException e) {
                 e.printStackTrace();
             }
         });
         executorService.execute(() -> {
             try {
-                String consumerId = "invoice";
+                String consumerId = DocumentTypeEnum.invoice.name();
                 Consumer consumer = ConsumerCreator.createConsumer(
                         client, config.getTopicOutputInvoiceName(), consumerId,
                         String.format("%s_%s", SUBSCRIPTION_KEY_NAME, consumerId),
                         true
                 );
                 startConsumer(consumer);
-               // consumer.close();
+                consumer.close();
             } catch (PulsarClientException e) {
                 e.printStackTrace();
             }
@@ -156,7 +156,14 @@ public class IntegrationPulsarApplication {
         ExecutorService executorService = Executors.newFixedThreadPool(3);
         executorService.execute(() -> {
             try {
-                runProducerWithKeys(config.getTopicInputGroupName());
+                runProducerWithKeys(config.getTopicInputOrderName());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        executorService.execute(() -> {
+            try {
+                runProducerWithKeys(config.getTopicInputInvoiceName());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -183,7 +190,7 @@ public class IntegrationPulsarApplication {
         ExecutorService executorService = Executors.newFixedThreadPool(3);
         executorService.execute(() -> {
             try {
-                runProducerWithKeys(config.getTopicInputGroupName());
+                runProducerWithKeys(config.getTopicInputOrderName());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -211,20 +218,21 @@ public class IntegrationPulsarApplication {
      * TODO выделить в отдельный юзкейс
      */
     private static void runProducerWithKeys(String topicName) throws PulsarClientException, JsonProcessingException {
-        RoutingDocument document = loadDocument();
+        OutputDocumentExt document = loadDocument();
         Producer<byte[]> producer = client.newProducer()
                 .topic(topicName)
                 .compressionType(CompressionType.LZ4)
                 .create();
         for (int index = 0; index < config.getMessageCount(); index++) {
-            document.setDocId(index);
+            document.setDocumentId(index);
+            document.setDocumentNumber(index + 100);
             if ((index % 2) == 0) {
-                document.setDocType(DocumentTypeEnum.order);
+                document.setDocumentType(DocumentTypeEnum.order);
             } else {
-                document.setDocType(DocumentTypeEnum.invoice);
+                document.setDocumentType(DocumentTypeEnum.invoice);
             }
             byte[] msgValue = xmlMapper().writeValueAsString(document).getBytes();
-            String messageKey = document.getDocType().name() + "_" + getMessageKey(index, KeyTypeEnum.UUID);
+            String messageKey = document.getDocumentType().name() + "_" + getMessageKey(index, KeyTypeEnum.UUID);
             producer.newMessage()
                     .key(messageKey)
                     .value(msgValue)
@@ -239,11 +247,14 @@ public class IntegrationPulsarApplication {
     }
 
     private static void startConsumer(Consumer<byte[]> consumer) throws PulsarClientException {
-        while (msg_received_counter.get() < config.getMessageCount()) {
-            Message message = consumer.receive(1, TimeUnit.SECONDS);
+
+        while (true) {
+            Message message = consumer.receive(5, TimeUnit.SECONDS);
             if (message == null) {
-                continue;
+                LOG.info("No message to consume after waiting for 5 seconds.");
+                break;
             }
+            consumer.acknowledge(message);
             msg_received_counter.incrementAndGet();
 
             Set consumerRecordSet = consumerRecordSetMap.get(consumer.getConsumerName());
@@ -253,13 +264,13 @@ public class IntegrationPulsarApplication {
             consumerRecordSet.add(message.getValue());
             consumerRecordSetMap.put(consumer.getConsumerName(), consumerRecordSet);
 
-            //LOG.info(String.format("Consumer %s read record key=%s, number=%s, value=%s, topic=%s",
-            //        consumerId,
-            //        message.getKey(),
-            //        msg_received_counter,
-            //        new String(message.getData()),
-            //        message.getTopicName()
-            //));
+            LOG.info(String.format("Consumer %s read record key=%s, number=%s, value=%s, topic=%s",
+                    consumer.getConsumerName(),
+                    message.getKey(),
+                    msg_received_counter,
+                    new String(message.getData()),
+                    message.getTopicName()
+            ));
         }
     }
 
@@ -276,16 +287,16 @@ public class IntegrationPulsarApplication {
         }
     }
 
-    private static RoutingDocument loadDocument() {
+    private static OutputDocumentExt loadDocument() {
         String messageXml = "<?xml version=\"1.0\" encoding=\"windows-1251\"?>\n" +
                 "<OutputDocumentExt>\n" +
                 "  <documentId>1</documentId>\n" +
                 "  <documentType>order</documentType>\n" +
                 "  <documentNumber>123</documentNumber>\n" +
                 "</OutputDocumentExt>";
-        RoutingDocument document;
+        OutputDocumentExt document;
         try {
-            document = xmlMapper().readValue(messageXml, RoutingDocument.class);
+            document = xmlMapper().readValue(messageXml, OutputDocumentExt.class);
         } catch (IOException e) {
             LOG.log(Level.WARNING, "Error readValue from resource", e);
             throw new TestMessageException(e);

@@ -3,60 +3,37 @@
 #Конфигурация кластера
 
 Кластер из 3 брокеров и 6 узлов bookies
-Топик с  6 партициями
+1 топик для входящих сообщений и два топика для преобразованных исходящих сообщений.
 1 продюсер
 3 консюмера в одной группе
 
 #Кейсы для реализации 
-1. Гарантия доставки ATLEAST_ONCE - сообщение будет записано в партицию топика хотя бы один раз.
-Сообщения отправляются одним продюсером в топик topic-part6-demo и одновременно вычитываются тремя косьюмерами с помощью SHARED подписки.
-Количество отправленных уникальных сообщений должно быть не меньше количества принятых сообщений.
-Ключ сообщений не задан. 
+1. Применение преобразования формата сообщения в реальном времени в потоковом режиме. 
+В топик для входящих сообщений записываются сообщения разного типа. В зависимости от типа сообщения, 
+они трансформируются в другой формат и записываются в соответсвующие топики.
 
-2. Гарантия доставки ATMOST_ONCE - сообщение будет записано в партицию топика не более одного раза.
-Сообщения отправляются одним продюсером в топик topic-part6-demo и одновременно вычитываются тремя косьюмерами с помощью KEY_SHARED подписки.
-Для сообщений указывается уникальный ключ. Количество отправленных уникальных сообщений должно быть не меньше количества принятых сообщений.
+2. Агрегирование событий из разных источников данных по кличеству накопленных сообщений.
+Агрегация по 100 сообщений из одного топика с целью получения единого сообщения содержащего данные всех переданных сообщений.
+Агрегация сообщений из разных топиков.
 
-Настройка дедупликация для пространства имен:
-sudo ./pulsar-admin namespaces set-deduplication public/namespace-demo --enable false
-
-3. Гарантия доставки EFFECTIVELY_ONCE + дедупликация - ровно-однократная
-Сообщения отправляются одним продюсером в топик topic-part6-demo и одновременно вычитываются тремя косьюмерами с помощью KEY_SHARED подписки.
-Для сообщений указывается уникальный ключ. На один ключ отправляется три версии сообщения.
-Количество отправленных уникальных сообщений должно быть не меньше количества принятых сообщений.
-
-Настройка дедупликация для пространства имен:
-sudo ./pulsar-admin namespaces set-deduplication public/namespace-demo --enable true
-
-4. Поддержка времени жизни сообщений TTL без настройки retention
-Сообщения отправляются одним продюсером в топик topic-part6-demo без вычитывания.
-Спустя 3 минуты сообщения вычитываются тремя косьюмерами с помощью SHARED подписки.
-После превышения времени 2 минуты сообщения помечаются как удаленные и не должны быть вычитаны.
-При этом необходимо настроить частоту проверки у брокера:
-messageExpiryCheckIntervalInMinutes = 60 сек
-
-Настройка TTL для пространства имен:
-sudo ./pulsar-admin namespaces set-message-ttl public/namespace-demo --messageTTL 120 
-
-5. Поддержка маршрутизации и фильтрации сообщений
-Сообщения отправляются одним продюсером в топик topic-input-demo и в зависимости от значения ключа маршрутизируются в два других топика:
-topic-output-order-demo и topic-output-invoice-demo.
-Для этого кейса не обязательно создавать отдельно пространство. После загрузки функций топики создаются автоматически.
-namespaces = public/default
-
-    а) Маршрутизация сообщений по ключу.
-       RoutingByKeyDemoFunction
-    б) Фильтрация сообщений по ключу.
-       FilterByKeyDemoFunction
-    в) Фильтрация сообщений в зависимости от содержания.
-       FilterByBodyDemoFunction
+3. Получение суммы по полю группы событий.
+Событие в формате JSON содержит поле целое числовое поле amount.
+Рассчитать сумму по полю amount за последнюю минуту.
 
 #Создание функции:
 Для загрузки функци необходимо пометить jar примера в папку apache-pulsar-2.7.1/lib
 и выполнить комманду загрузки для каждой функции
 
 sudo ./pulsar-admin functions create \
---jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-p2p-1.0.0.jar \
+--jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-stream-1.0.0.jar \
+--classname ru.syntez.integration.pulsar.functions.TransformDemoFunction \
+--tenant public \ 
+--namespace default \
+--name transformDemo \
+--inputs persistent://public/default/topic-input-demo
+
+sudo ./pulsar-admin functions create \
+--jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-stream-1.0.0.jar \
 --classname ru.syntez.integration.pulsar.functions.AggregationByCountDemoFunction \ 
 --tenant public \ 
 --namespace default \
@@ -64,7 +41,7 @@ sudo ./pulsar-admin functions create \
 --inputs persistent://public/default/topic-input-route-demo
 
 sudo ./pulsar-admin functions create \
---jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-p2p-1.0.0.jar \
+--jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-stream-1.0.0.jar \
 --classname ru.syntez.integration.pulsar.functions.TransformDemoFunction \
 --tenant public \ 
 --namespace default \
@@ -72,7 +49,7 @@ sudo ./pulsar-admin functions create \
 --inputs persistent://public/default/topic-input-filter-demo
 
 sudo ./pulsar-admin functions create \
---jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-p2p-1.0.0.jar \
+--jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-stream-1.0.0.jar \
 --classname ru.syntez.integration.pulsar.functions.AggregationByTimeDemoFunction \
 --tenant public \ 
 --namespace default \

@@ -10,8 +10,8 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.functions.api.Context;
 import org.apache.pulsar.functions.api.Function;
-import ru.syntez.integration.pulsar.processor.MapStructConverter;
-import ru.syntez.integration.pulsar.processor.entities.OutputDocumentExt;
+import ru.syntez.integration.pulsar.entities.DocumentTypeEnum;
+import ru.syntez.integration.pulsar.entities.OutputDocumentExt;
 
 public class TransformDemoFunction implements Function<String, Void> {
 
@@ -49,13 +49,13 @@ public class TransformDemoFunction implements Function<String, Void> {
                         messageKey,
                         context.getCurrentRecord().getValue()
                 ));
-                if (outputDocumentExt.getDocumentType().equals("order")) {
+                if (outputDocumentExt.getDocumentType().equals(DocumentTypeEnum.order.name())) {
                     String orderDocument = xmlMapper.writeValueAsString(MapStructConverter.MAPPER.convertOrder(outputDocumentExt));
                     context.newOutputMessage(TOPIC_OUTPUT_ORDER, Schema.BYTES)
                             .key(messageKey)
                             .value(orderDocument.getBytes())
                             .send();
-                } else if (outputDocumentExt.getDocumentType().equals("invoice")) {
+                } else if (outputDocumentExt.getDocumentType().equals(DocumentTypeEnum.invoice.name())) {
                     String invoiceDocument = xmlMapper.writeValueAsString(MapStructConverter.MAPPER.convertInvoice(outputDocumentExt));
                     context.newOutputMessage(TOPIC_OUTPUT_INVOICE, Schema.BYTES)
                             .key(messageKey)

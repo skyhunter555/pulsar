@@ -1,4 +1,4 @@
-package ru.syntez.integration.pulsar.processor.entities;
+package ru.syntez.integration.pulsar.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;

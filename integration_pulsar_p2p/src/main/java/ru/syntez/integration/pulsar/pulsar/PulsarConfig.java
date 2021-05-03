@@ -10,6 +10,9 @@ public class PulsarConfig {
     private Integer timeoutBeforeConsume;
     private ProducerConfig producer;
 
+    private String  topicAtleastName;
+    private String  topicAtmostName;
+    private String  topicEffectivelyName;
     private String  topicName;
     private String  topicInputRouteName;
     private String  topicInputFilterName;

@@ -7,8 +7,9 @@ public class PulsarConfig {
 
     private String  brokers;
     private Integer messageCount;
-    private String  topicInputRouteName;
-    private String  topicInputGroupName;
+    private String  topicInputName;
+    private String  topicInputOrderName;
+    private String  topicInputInvoiceName;
     private String  topicOutputOrderName;
     private String  topicOutputInvoiceName;
     private String  topicOutputGroupName;

@@ -1,4 +1,4 @@
-package ru.syntez.integration.pulsar.processor.entities;
+package ru.syntez.integration.pulsar.entities;
 
 import lombok.Data;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -16,6 +16,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 @Data
 public class OutputDocumentExt {
     private int documentId;
-    private String documentType;
+    private DocumentTypeEnum documentType;
     private Integer documentNumber;
 }

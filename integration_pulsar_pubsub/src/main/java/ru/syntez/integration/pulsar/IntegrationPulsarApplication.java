@@ -251,11 +251,13 @@ public class IntegrationPulsarApplication {
 
         Consumer<byte[]> consumer = ConsumerCreator.createConsumer(client, config.getTopicName(), consumerId);
 
-        while (msg_received_counter.get() < config.getMessageCount()) {
-            Message message = consumer.receive(1, TimeUnit.SECONDS);
+        while (true) {
+            Message message = consumer.receive(5, TimeUnit.SECONDS);
             if (message == null) {
-                continue;
+                LOG.info("No message to consume after waiting for 5 seconds.");
+                break;
             }
+            consumer.acknowledge(message);
             msg_received_counter.incrementAndGet();
 
             Set consumerRecordSet = consumerRecordSetMap.get(consumerId);

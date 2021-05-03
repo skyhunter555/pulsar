@@ -8,6 +8,9 @@ producer:
   lingerMs: 20
   deliveryTimeoutMs: 1000
 
+topicAtleastName: "persistent://public/namespace-demo/topic-atleast-demo"
+topicAtmostName: "persistent://public/namespace-demo/topic-atmost-demo"
+topicEffectivelyName: "persistent://public/namespace-demo/topic-effectively-demo"
 topicName: "persistent://public/namespace-demo/topic-part6-demo"
 topicInputRouteName: "persistent://public/default/topic-input-route-demo"
 topicOutputOrderName: "persistent://public/default/topic-output-order-demo"

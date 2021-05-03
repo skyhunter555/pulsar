@@ -9,12 +9,10 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.functions.api.Context;
 import org.apache.pulsar.functions.api.Function;
-import ru.syntez.integration.pulsar.processor.entities.OutputDocumentExt;
+import ru.syntez.integration.pulsar.entities.OutputDocumentExt;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 //TODO window
 public class AggregationByTimeDemoFunction implements Function<String, Void> {
