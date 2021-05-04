@@ -13,5 +13,5 @@ public class PulsarConfig {
     private String  topicOutputOrderName;
     private String  topicOutputInvoiceName;
     private String  topicOutputGroupName;
-
+    private String  topicInputJsonName;
 }

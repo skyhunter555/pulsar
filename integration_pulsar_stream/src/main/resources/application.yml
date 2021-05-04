@@ -1,9 +1,10 @@
 #default config value
 brokers: "pulsar://192.168.56.101:6650"
-messageCount: 100
+messageCount: 1000
 topicInputName: "persistent://public/default/topic-input-demo"
 topicOutputOrderName: "persistent://public/default/topic-output-order-demo"
 topicOutputInvoiceName: "persistent://public/default/topic-output-invoice-demo"
 topicInputOrderName: "persistent://public/default/topic-input-order-demo"
 topicInputInvoiceName: "persistent://public/default/topic-input-invoice-demo"
 topicOutputGroupName: "persistent://public/default/topic-output-demo"
+topicInputJsonName: "persistent://public/default/topic-input-json-demo"

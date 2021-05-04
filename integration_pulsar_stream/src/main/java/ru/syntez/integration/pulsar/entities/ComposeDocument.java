@@ -14,7 +14,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Data
 public class ComposeDocument {
-    private int composeId;
+    private Long composeId;
     private String composeLabel;
     private List<OrderDocument> orderDocuments;
     private List<InvoiceDocument> invoiceDocuments;

@@ -7,8 +7,8 @@ import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.apache.pulsar.client.api.*;
 import org.yaml.snakeyaml.Yaml;
+import ru.syntez.integration.pulsar.entities.ComposeDocument;
 import ru.syntez.integration.pulsar.entities.DocumentTypeEnum;
-import ru.syntez.integration.pulsar.entities.KeyTypeEnum;
 import ru.syntez.integration.pulsar.entities.OutputDocumentExt;
 import ru.syntez.integration.pulsar.entities.RoutingDocument;
 import ru.syntez.integration.pulsar.exceptions.TestMessageException;
@@ -17,7 +17,6 @@ import ru.syntez.integration.pulsar.utils.ResultOutput;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -40,6 +39,7 @@ public class IntegrationPulsarApplication {
     private static ru.syntez.integration.pulsar.pulsar.PulsarConfig config;
     private static Map<String, Set<String>> consumerRecordSetMap = new ConcurrentHashMap<>();
     private static PulsarClient client;
+    private static ObjectMapper jsonMapper = new ObjectMapper();
 
     private static final String SUBSCRIPTION_KEY_NAME = "key-shared-demo";
 
@@ -68,7 +68,7 @@ public class IntegrationPulsarApplication {
                     .serviceUrl(config.getBrokers())
                     .build();
 
-             //кейс Применение преобразования формата сообщения в реальном времени в потоковом режиме.
+            //кейс Применение преобразования формата сообщения в реальном времени в потоковом режиме.
             LOG.info("Запуск проверки преобразования формата сообщения...");
             runConsumersWithTransform();
             LOG.info("Проверка преобразования формата сообщения завершена.");
@@ -77,19 +77,19 @@ public class IntegrationPulsarApplication {
 
             //кейс Агрегация по 100 сообщений из одного топика с целью получения единого сообщения содержащего данные всех переданных сообщений.
             //Агрегация сообщений из разных топиков.
-           //LOG.info("Запуск проверки агрегации по 100 сообщений...");
-           //runConsumersWithAggregationByCount();
-           //LOG.info("Проверка агрегации по 100 сообщений завершена.");
-           //ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
-           //resetResults();
+            LOG.info("Запуск проверки агрегации по 100 сообщений...");
+            runConsumersWithAggregationByCount();
+            LOG.info("Проверка агрегации по 100 сообщений завершена.");
+            ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
+            resetResults();
 
-           ////кейс Событие в формате JSON содержит поле целое числовое поле amount
-           ////Рассчитать сумму по полю amount за последнюю минуту
-           //LOG.info("Запуск проверки агрегации за последнюю минуту...");
-           //runConsumersWithAggregationByTime();
-           //LOG.info("Проверка агрегации за последнюю минуту завершена.");
-           //ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
-           //resetResults();
+            //кейс Событие в формате JSON содержит поле целое числовое поле amount
+            //Рассчитать сумму по полю amount за последнюю минуту
+            LOG.info("Запуск проверки агрегации за последнюю минуту...");
+            runConsumersWithAggregationByTime();
+            LOG.info("Проверка агрегации за последнюю минуту завершена.");
+            ResultOutput.outputResult(msg_sent_counter.get(), msg_received_counter.get(), consumerRecordSetMap);
+            resetResults();
 
             client.close();
         } catch (Exception e) {
@@ -152,6 +152,11 @@ public class IntegrationPulsarApplication {
         executorService.awaitTermination(1, TimeUnit.MINUTES);
     }
 
+    /**
+     * Запуск обработки сообщений с агрегацией по количеству
+     *
+     * @throws InterruptedException
+     */
     private static void runConsumersWithAggregationByCount() throws InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(3);
         executorService.execute(() -> {
@@ -170,7 +175,7 @@ public class IntegrationPulsarApplication {
         });
         executorService.execute(() -> {
             try {
-                String consumerId = "filter";
+                String consumerId = "aggregatorByCount";
                 Consumer consumer = ConsumerCreator.createConsumer(
                         client, config.getTopicOutputGroupName(), consumerId,
                         String.format("%s_%s", SUBSCRIPTION_KEY_NAME, consumerId),
@@ -186,18 +191,23 @@ public class IntegrationPulsarApplication {
         executorService.awaitTermination(1, TimeUnit.MINUTES);
     }
 
+    /**
+     * Запуск обработки сообщений с агрегацией по времени
+     *
+     * @throws InterruptedException
+     */
     private static void runConsumersWithAggregationByTime() throws InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(3);
         executorService.execute(() -> {
             try {
-                runProducerWithKeys(config.getTopicInputOrderName());
+                runProducerWithAmount(config.getTopicInputJsonName());
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
         executorService.execute(() -> {
             try {
-                String consumerId = "filter";
+                String consumerId = "aggregatorByTime";
                 Consumer consumer = ConsumerCreator.createConsumer(
                         client, config.getTopicOutputGroupName(), consumerId,
                         String.format("%s_%s", SUBSCRIPTION_KEY_NAME, consumerId),
@@ -213,7 +223,35 @@ public class IntegrationPulsarApplication {
         executorService.awaitTermination(1, TimeUnit.MINUTES);
     }
 
-     /**
+    /**
+     * Отправка сообщений с уникальным ключом и полем amount
+     * TODO выделить в отдельный юзкейс
+     */
+    private static void runProducerWithAmount(String topicName) throws PulsarClientException, JsonProcessingException, InterruptedException {
+        RoutingDocument document = new RoutingDocument();
+        Producer<byte[]> producer = client.newProducer()
+                .topic(topicName)
+                .compressionType(CompressionType.LZ4)
+                .create();
+        for (int index = 0; index < config.getMessageCount(); index++) {
+            document.setDocId(index);
+            document.setAmount(index + 100);
+            byte[] msgValue = jsonMapper.writeValueAsString(document).getBytes();
+            String messageKey = getMessageKey();
+            producer.newMessage()
+                    .key(messageKey)
+                    .value(msgValue)
+                    .send();
+            msg_sent_counter.incrementAndGet();
+            Thread.sleep(5000);
+            LOG.info("Send message " + index + "; Amount=" + document.getAmount() + "; topic = " + topicName);
+        }
+        producer.flush();
+        LOG.info(String.format("Количество отправленных уникальных сообщений: %s", msg_sent_counter.get()));
+
+    }
+
+    /**
      * Отправка сообщений с уникальным ключом для второго кейса - проверка гарантии at-most-once
      * TODO выделить в отдельный юзкейс
      */
@@ -232,11 +270,10 @@ public class IntegrationPulsarApplication {
                 document.setDocumentType(DocumentTypeEnum.invoice);
             }
             byte[] msgValue = xmlMapper().writeValueAsString(document).getBytes();
-            String messageKey = document.getDocumentType().name() + "_" + getMessageKey(index, KeyTypeEnum.UUID);
+            String messageKey = document.getDocumentType().name() + "_" + getMessageKey();
             producer.newMessage()
                     .key(messageKey)
                     .value(msgValue)
-                    .property("my-key", "my-value")
                     .send();
             msg_sent_counter.incrementAndGet();
             //LOG.info("Send message " + index + "; Key=" + messageKey + "; topic = " + topicName);
@@ -249,9 +286,9 @@ public class IntegrationPulsarApplication {
     private static void startConsumer(Consumer<byte[]> consumer) throws PulsarClientException {
 
         while (true) {
-            Message message = consumer.receive(5, TimeUnit.SECONDS);
+            Message message = consumer.receive(60, TimeUnit.SECONDS);
             if (message == null) {
-                LOG.info("No message to consume after waiting for 5 seconds.");
+                LOG.info("No message to consume after waiting for 30 seconds.");
                 break;
             }
             consumer.acknowledge(message);
@@ -275,16 +312,8 @@ public class IntegrationPulsarApplication {
     }
 
 
-    private static String getMessageKey(Integer index, KeyTypeEnum keyType) {
-        if (KeyTypeEnum.ONE.equals(keyType)) {
-            return "key_1";
-        } else if (KeyTypeEnum.UUID.equals(keyType)) {
-            return UUID.randomUUID().toString();
-        } else if (KeyTypeEnum.NUMERIC.equals(keyType)) {
-            return String.format("key_%s", index);
-        } else {
-            return null;
-        }
+    private static String getMessageKey() {
+        return UUID.randomUUID().toString();
     }
 
     private static OutputDocumentExt loadDocument() {

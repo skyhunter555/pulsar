@@ -1,58 +1,46 @@
 package ru.syntez.integration.pulsar.functions;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
-import org.apache.pulsar.client.api.PulsarClientException;
-import org.apache.pulsar.client.api.Schema;
-import org.apache.pulsar.functions.api.Context;
-import org.apache.pulsar.functions.api.Function;
-import ru.syntez.integration.pulsar.entities.OutputDocumentExt;
+import org.apache.pulsar.functions.api.*;
+import ru.syntez.integration.pulsar.entities.RoutingDocument;
+import java.util.Collection;
+import java.util.Date;
 
-import java.util.ArrayList;
-import java.util.List;
+public class AggregationByTimeDemoFunction implements WindowFunction<String, String> {
 
-//TODO window
-public class AggregationByTimeDemoFunction implements Function<String, Void> {
-
-    private final String TOPIC_OUTPUT = "topic-output-demo";
-    private ObjectMapper xmlMapper;
-    private final List<OutputDocumentExt> outputDocumentExtList = new ArrayList<>();
-
-    private void initXMLMapper() {
-        JacksonXmlModule xmlModule = new JacksonXmlModule();
-        xmlModule.setDefaultUseWrapper(false);
-        xmlMapper = new XmlMapper(xmlModule);
-        ((XmlMapper) xmlMapper).enable(ToXmlGenerator.Feature.WRITE_XML_DECLARATION);
-        xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    }
+    private ObjectMapper jsonMapper = new ObjectMapper();
+    private long lastDurationMs = 60000;
 
     @Override
-    public Void process(String input, Context context) {
-        //context.getLogger().info("RoutingByKeyDemoFunction check!!! context:" + context.toString());
+    public String process(Collection<Record<String>> inputs, WindowContext context) {
 
-        OutputDocumentExt outputDocumentExt;
-        try {
-            outputDocumentExt = xmlMapper.readValue((String) context.getCurrentRecord().getValue(), OutputDocumentExt.class);
-        } catch (Exception ex) {
-            context.getLogger().error("Failed to read XML string: " + ex.getMessage());
-            return null;
-        }
+        int documentsAmount = 0;
+        int recordsCount = 0;
+        Date nowDate = new Date();
+        context.getLogger().info(String.format("AggregationByTimeDemoFunction started=%s, recordsCount=%s", nowDate, inputs.size()));
+        for (Record<String> record : inputs) {
 
-        try {
-            if (context.getCurrentRecord().getKey().isPresent()) {
-                String messageKey = context.getCurrentRecord().getKey().get();
-                context.newOutputMessage(TOPIC_OUTPUT, Schema.BYTES)
-                        .key(messageKey)
-                        .value(((String) context.getCurrentRecord().getValue()).getBytes())
-                        .send();
+            context.getLogger().info(String.format("AggregationByTimeDemoFunction record value=%s", record));
+
+            if (record.getEventTime().isPresent()) {
+                Long eventTimestamp =  record.getEventTime().get();
+                if (nowDate.getTime() - eventTimestamp < lastDurationMs) {
+                    RoutingDocument document;
+                    try {
+                        document = jsonMapper.readValue(record.getValue(), RoutingDocument.class);
+                    } catch (Exception ex) {
+                        context.getLogger().error("Failed to read JSON string: " + ex.getMessage());
+                        return null;
+                    }
+                    context.getLogger().info(String.format("recordEventTime=%s, documentsAmount=%s", new Date(eventTimestamp), documentsAmount));
+                    documentsAmount = documentsAmount + document.getAmount();
+                    recordsCount++;
+                }
             }
-        } catch (PulsarClientException e) {
-            context.getLogger().error(e.toString());
-        }
-        return null;
-    }
 
+        }
+        return String.format("Calculated documentsAmount=%s from recordCount=%s", documentsAmount, recordsCount);
+    }
 }
+
+
