@@ -18,7 +18,7 @@
 Для сообщений указывается уникальный ключ. Количество отправленных уникальных сообщений должно быть не меньше количества принятых сообщений.
 
 Настройка дедупликация для пространства имен:
-sudo ./pulsar-admin namespaces set-deduplication public/namespace-demo --enable false
+sudo ./pulsar-admin namespaces set-deduplication public/namespace-demo --disable
 
 3. Гарантия доставки EFFECTIVELY_ONCE + дедупликация - ровно-однократная
 Сообщения отправляются одним продюсером в топик topic-part6-demo и одновременно вычитываются тремя косьюмерами с помощью KEY_SHARED подписки.
@@ -26,7 +26,7 @@ sudo ./pulsar-admin namespaces set-deduplication public/namespace-demo --enable 
 Количество отправленных уникальных сообщений должно быть не меньше количества принятых сообщений.
 
 Настройка дедупликация для пространства имен:
-sudo ./pulsar-admin namespaces set-deduplication public/namespace-demo --enable true
+sudo ./pulsar-admin namespaces set-deduplication public/namespace-demo --enable
 
 4. Поддержка времени жизни сообщений TTL без настройки retention
 Сообщения отправляются одним продюсером в топик topic-part6-demo без вычитывания.

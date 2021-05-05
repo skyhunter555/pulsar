@@ -1,6 +1,6 @@
 #default config value
 brokers: "pulsar://192.168.56.101:6650"
-messageCount: 1000
+messageCount: 100
 timeoutBeforeConsume: 3
 producer:
   retries: 3

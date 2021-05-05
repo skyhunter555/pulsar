@@ -1,17 +1,30 @@
-package ru.syntez.integration.pulsar.pulsar;
+package ru.syntez.integration.pulsar.usecases.create;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.SubscriptionType;
-
 import java.util.logging.Logger;
 
-public class ConsumerCreator {
+/**
+ *  Создание консьюмера для приема сообщений
+ *  @author Skyhunter
+ *  @date 03.05.2021
+ */
+public class ConsumerCreatorUsecase {
 
-    private final static Logger LOG = Logger.getLogger(ru.syntez.integration.pulsar.IntegrationPulsarApplication.class.getName());
+    private final static Logger LOG = Logger.getLogger(ConsumerCreatorUsecase.class.getName());
 
-    public static Consumer<byte[]> createConsumer(
+    /**
+     * @param pulsarClient     - ссылка на созданный клиент Pulsar
+     * @param topicName        - наименование топика
+     * @param consumerId       - идентификатор консьюмера
+     * @param subscriptionName - наименование подписки
+     * @param withKeys         - признак наличия ключа в сообщении
+     * @return
+     * @throws PulsarClientException
+     */
+    public static Consumer<byte[]> execute(
             PulsarClient pulsarClient,
             String topicName,
             String consumerId,
@@ -36,5 +49,4 @@ public class ConsumerCreator {
 
         return consumer;
     }
-
 }

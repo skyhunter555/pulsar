@@ -1,4 +1,4 @@
-package ru.syntez.integration.pulsar.pulsar;
+package ru.syntez.integration.pulsar.config;
 
 import lombok.Data;
 
