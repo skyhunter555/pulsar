@@ -1,11 +1,10 @@
-package ru.syntez.integration.pulsar.pulsar;
+package ru.syntez.integration.pulsar.config;
 
 import lombok.Data;
 
 @Data
 public class ProducerConfig {
-
-    private String  acks;
+    //TODO применить эти параметры
     private Integer retries;
     private Integer requestTimeoutMs;
     private Integer lingerMs;

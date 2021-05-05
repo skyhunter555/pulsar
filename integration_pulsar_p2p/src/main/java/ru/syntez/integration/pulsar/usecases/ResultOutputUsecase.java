@@ -26,8 +26,11 @@ public class ResultOutputUsecase {
         for (Map.Entry entry : consumerRecordSetMap.entrySet()) {
             Set consumerRecordSet = (Set) entry.getValue();
             uniqueCount = uniqueCount + consumerRecordSet.size();
-            BigDecimal percent = (BigDecimal.valueOf(100).multiply(BigDecimal.valueOf(consumerRecordSet.size())))
-                    .divide(BigDecimal.valueOf(msgReceived), 3);
+            BigDecimal percent = BigDecimal.ZERO;
+            if (msgReceived > 0) {
+                percent = (BigDecimal.valueOf(100).multiply(BigDecimal.valueOf(consumerRecordSet.size())))
+                        .divide(BigDecimal.valueOf(msgReceived), 3);
+            }
             LOG.info(String.format("Количество принятых уникальных сообщений на консюмере %s: %s (%s)",
                     entry.getKey(),
                     consumerRecordSet.size(),

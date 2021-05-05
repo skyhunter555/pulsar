@@ -1,4 +1,4 @@
-package ru.syntez.integration.pulsar.pulsar;
+package ru.syntez.integration.pulsar.config;
 
 import lombok.Data;
 
@@ -7,7 +7,11 @@ public class PulsarConfig {
 
     private String  brokers;
     private Integer messageCount;
-    private String  topicName;
     private Integer timeoutBeforeConsume;
     private ProducerConfig producer;
+
+    private String  topicAtleastName;
+    private String  topicAtmostName;
+    private String  topicEffectivelyName;
+    private String  topicName;
 }

@@ -1,11 +1,14 @@
 #default config value
 brokers: "pulsar://192.168.56.101:6650"
 messageCount: 1000
-topicName: "persistent://public/namespace-demo/topic-part6-demo"
 timeoutBeforeConsume: 3
 producer:
   retries: 3
   requestTimeoutMs: 230
   lingerMs: 20
   deliveryTimeoutMs: 1000
+topicAtleastName: "persistent://public/namespace-demo/topic-atleast-demo"
+topicAtmostName: "persistent://public/namespace-demo/topic-atmost-demo"
+topicEffectivelyName: "persistent://public/namespace-demo/topic-effectively-demo"
+topicName: "persistent://public/namespace-demo/topic-part6-demo"
 
