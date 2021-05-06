@@ -36,7 +36,8 @@ public class RunGuarantiesTestUsecase {
             PulsarClient client,
             Boolean withKeys,
             Boolean withVersions,
-            String topicName
+            String topicName,
+            Boolean readCompacted
     ) throws InterruptedException {
 
         Runnable producerScenario = () -> {
@@ -55,7 +56,7 @@ public class RunGuarantiesTestUsecase {
             executorService.execute(() -> {
                 Consumer consumer = null;
                 try {
-                    consumer = createAndStartConsumer(client, consumerId, withKeys, topicName);
+                    consumer = createAndStartConsumer(client, consumerId, withKeys, topicName, readCompacted);
                 } catch (PulsarClientException e) {
                     e.printStackTrace();
                 } finally {
@@ -75,7 +76,12 @@ public class RunGuarantiesTestUsecase {
         ResultOutputUsecase.execute(msgSentCounter.get(), recordSetMap);
     }
 
-    private static Consumer createAndStartConsumer(PulsarClient client, String consumerId, Boolean withKeys, String topicName) throws PulsarClientException {
+    private static Consumer createAndStartConsumer(
+            PulsarClient client,
+            String consumerId,
+            Boolean withKeys,
+            String topicName,
+            Boolean readCompacted) throws PulsarClientException {
         String subscriptionName;
         if (withKeys) {
             subscriptionName = SubscriptionNameEnum.SUBSCRIPTION_KEY_NAME.getCode();
@@ -86,7 +92,8 @@ public class RunGuarantiesTestUsecase {
                 client,
                 topicName,
                 consumerId,
-                subscriptionName);
+                subscriptionName,
+                readCompacted);
         recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, false));
 
         return consumer;

@@ -1,9 +1,6 @@
 package ru.syntez.integration.pulsar.usecases.create;
 
-import org.apache.pulsar.client.api.Consumer;
-import org.apache.pulsar.client.api.PulsarClient;
-import org.apache.pulsar.client.api.PulsarClientException;
-import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.client.api.*;
 
 import java.util.logging.Logger;
 
@@ -28,11 +25,14 @@ public class ConsumerCreatorUsecase {
             PulsarClient pulsarClient,
             String topicName,
             String consumerId,
-            String subscriptionName
+            String subscriptionName,
+            Boolean readCompacted
     ) throws PulsarClientException {
         Consumer<byte[]> consumer = pulsarClient.newConsumer()
                 .consumerName(consumerId)
                 .topic(topicName)
+                .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
+                .readCompacted(readCompacted)
                 .subscriptionType(SubscriptionType.Exclusive)
                 .subscriptionName(subscriptionName + "_" + consumerId)
                 .subscribe();

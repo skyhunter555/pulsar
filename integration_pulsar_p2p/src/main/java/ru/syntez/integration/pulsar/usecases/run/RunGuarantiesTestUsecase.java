@@ -13,7 +13,6 @@ import ru.syntez.integration.pulsar.usecases.ResultOutputUsecase;
 import ru.syntez.integration.pulsar.usecases.StartConsumerUsecase;
 import ru.syntez.integration.pulsar.usecases.create.ConsumerCreatorUsecase;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,7 +35,8 @@ public class RunGuarantiesTestUsecase {
             PulsarClient client,
             Boolean withKeys,
             Boolean withVersions,
-            String topicName
+            String topicName,
+            Boolean redeliveryEnable
     ) throws InterruptedException {
 
         Runnable producerScenario = () -> {
@@ -55,7 +55,7 @@ public class RunGuarantiesTestUsecase {
             executorService.execute(() -> {
                 Consumer consumer = null;
                 try {
-                    consumer = createAndStartConsumer(client, consumerId, withKeys, topicName);
+                    consumer = createAndStartConsumer(client, config, consumerId, withKeys, topicName, redeliveryEnable);
                 } catch (PulsarClientException e) {
                     e.printStackTrace();
                 } finally {
@@ -75,7 +75,14 @@ public class RunGuarantiesTestUsecase {
         ResultOutputUsecase.execute(msgSentCounter.get(), recordSetMap);
     }
 
-    private static Consumer createAndStartConsumer(PulsarClient client, String consumerId, Boolean withKeys, String topicName) throws PulsarClientException {
+    private static Consumer createAndStartConsumer(
+            PulsarClient client,
+            PulsarConfig config,
+            String consumerId,
+            Boolean withKeys,
+            String topicName,
+            Boolean redeliveryEnable
+    ) throws PulsarClientException {
         String subscriptionName;
         if (withKeys) {
             subscriptionName = SubscriptionNameEnum.SUBSCRIPTION_KEY_NAME.getCode();
@@ -84,11 +91,13 @@ public class RunGuarantiesTestUsecase {
         }
         Consumer<byte[]> consumer = ConsumerCreatorUsecase.execute(
                 client,
+                config,
                 topicName,
                 consumerId,
                 subscriptionName,
-                withKeys);
-        recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, false));
+                withKeys,
+                redeliveryEnable);
+        recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled()));
 
         return consumer;
     }

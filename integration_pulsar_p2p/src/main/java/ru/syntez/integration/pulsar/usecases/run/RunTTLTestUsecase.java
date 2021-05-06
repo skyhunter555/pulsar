@@ -43,10 +43,10 @@ public class RunTTLTestUsecase {
             try {
                 String consumerId = "ttl";
                 Consumer consumer = ConsumerCreatorUsecase.execute(
-                        client, config.getTopicName(), consumerId,
+                        client, config, config.getTopicName(), consumerId,
                         String.format("%s_%s", SubscriptionNameEnum.SUBSCRIPTION_KEY_NAME.getCode(), consumerId),
-                        true);
-                recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, false));
+                        true, true);
+                recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled()));
                 consumer.close();
             } catch (PulsarClientException e) {
                 e.printStackTrace();

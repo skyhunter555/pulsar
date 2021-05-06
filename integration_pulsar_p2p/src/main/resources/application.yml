@@ -2,18 +2,19 @@
 brokers: "pulsar://192.168.56.101:6650"
 messageCount: 100
 timeoutBeforeConsume: 3
-producer:
-  retries: 3
-  requestTimeoutMs: 230
-  lingerMs: 20
-  deliveryTimeoutMs: 1000
+maxRedeliveryCount: 5
+recordLogOutputEnabled: false
+operationTimeoutSeconds: 2
+connectTimeoutSeconds: 3
 
 topicAtleastName: "persistent://public/namespace-demo/topic-atleast-demo"
 topicAtmostName: "persistent://public/namespace-demo/topic-atmost-demo"
 topicEffectivelyName: "persistent://public/namespace-demo/topic-effectively-demo"
+topicEffectivelyCompactedName: "persistent://public/namespace-demo/topic-effectively-compacted-demo"
 topicName: "persistent://public/namespace-demo/topic-part6-demo"
 topicInputRouteName: "persistent://public/default/topic-input-route-demo"
 topicOutputOrderName: "persistent://public/default/topic-output-order-demo"
 topicOutputInvoiceName: "persistent://public/default/topic-output-invoice-demo"
 topicInputFilterName: "persistent://public/default/topic-input-filter-demo"
 topicOutputFilterName: "persistent://public/default/topic-output-demo"
+topicDeadLetterName: "persistent://public/default/topic-output-retry"

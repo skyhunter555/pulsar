@@ -10,5 +10,6 @@ producer:
 topicAtleastName: "persistent://public/namespace-demo/topic-atleast-demo"
 topicAtmostName: "persistent://public/namespace-demo/topic-atmost-demo"
 topicEffectivelyName: "persistent://public/namespace-demo/topic-effectively-demo"
+topicEffectivelyCompactedName: "persistent://public/namespace-demo/topic-effectively-compacted-demo"
 topicName: "persistent://public/namespace-demo/topic-part6-demo"
 

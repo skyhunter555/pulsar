@@ -28,7 +28,10 @@ public class PulsarSender {
                 RoutingDocument document = docGenerator.create(index);
                 Optional<String> msgKey = Optional.ofNullable(keyGenerator.generate(document));
                 if (msgKey.isPresent())
-                    producer.newMessage().key(msgKey.get()).value(SerializeDocumentUsecase.execute(document)).send();
+                    producer.newMessage()
+                            .key(msgKey.get())
+                            .value(SerializeDocumentUsecase.execute(document))
+                            .send();
                 else
                     producer.newMessage().value(SerializeDocumentUsecase.execute(document)).send();
 

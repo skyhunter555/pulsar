@@ -28,7 +28,7 @@ public class StartConsumerUsecase {
     public static Set<String> execute(Consumer<byte[]> consumer, boolean recordLogOutputEnabled) throws PulsarClientException {
 
         Set<String> consumerRecordSet = new HashSet<>();
-        AtomicInteger msg_received_counter = new AtomicInteger(0);
+        AtomicInteger msgReceivedCounter = new AtomicInteger(0);
 
         while (true) {
             Message message = consumer.receive(10, TimeUnit.SECONDS);
@@ -43,7 +43,7 @@ public class StartConsumerUsecase {
                 LOG.info(String.format("Consumer %s read record key=%s, number=%s, value=%s, topic=%s",
                         consumer.getConsumerName(),
                         message.getKey(),
-                        msg_received_counter,
+                        msgReceivedCounter,
                         new String(message.getData()),
                         message.getTopicName()
                 ));

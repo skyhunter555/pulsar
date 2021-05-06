@@ -43,11 +43,11 @@ public class RunRoutingFunctionTestUsecase {
             try {
                 String consumerId = DocumentTypeEnum.order.name();
                 Consumer consumer = ConsumerCreatorUsecase.execute(
-                        client, config.getTopicOutputOrderName(), consumerId,
+                        client, config, config.getTopicOutputOrderName(), consumerId,
                         String.format("%s_%s", SubscriptionNameEnum.SUBSCRIPTION_KEY_NAME.getCode(), consumerId),
-                        true
+                        true, true
                 );
-                recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, false));
+                recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled()));
             } catch (PulsarClientException e) {
                 e.printStackTrace();
             }
@@ -56,11 +56,11 @@ public class RunRoutingFunctionTestUsecase {
             try {
                 String consumerId = DocumentTypeEnum.invoice.name();
                 Consumer consumer = ConsumerCreatorUsecase.execute(
-                        client, config.getTopicOutputInvoiceName(), consumerId,
+                        client, config, config.getTopicOutputInvoiceName(), consumerId,
                         String.format("%s_%s", SubscriptionNameEnum.SUBSCRIPTION_KEY_NAME.getCode(), consumerId),
-                        true
+                        true, true
                 );
-                recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, false));
+                recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled()));
             } catch (PulsarClientException e) {
                 e.printStackTrace();
             }

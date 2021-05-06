@@ -13,5 +13,6 @@ public class PulsarConfig {
     private String  topicAtleastName;
     private String  topicAtmostName;
     private String  topicEffectivelyName;
+    private String  topicEffectivelyCompactedName;
     private String  topicName;
 }

@@ -45,7 +45,7 @@ public class RunTTLTestUsecase {
                 String consumerId = "ttl";
                 Consumer consumer = ConsumerCreatorUsecase.execute(
                         client, config.getTopicName(), consumerId,
-                        String.format("%s_%s", SubscriptionNameEnum.SUBSCRIPTION_KEY_NAME.getCode(), consumerId));
+                        String.format("%s_%s", SubscriptionNameEnum.SUBSCRIPTION_KEY_NAME.getCode(), consumerId), false);
                 recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, false));
                 consumer.close();
             } catch (PulsarClientException e) {

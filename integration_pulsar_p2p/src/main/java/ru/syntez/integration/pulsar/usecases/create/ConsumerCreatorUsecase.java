@@ -1,9 +1,9 @@
 package ru.syntez.integration.pulsar.usecases.create;
 
-import org.apache.pulsar.client.api.Consumer;
-import org.apache.pulsar.client.api.PulsarClient;
-import org.apache.pulsar.client.api.PulsarClientException;
-import org.apache.pulsar.client.api.SubscriptionType;
+import org.apache.pulsar.client.api.*;
+import ru.syntez.integration.pulsar.config.PulsarConfig;
+
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
@@ -26,10 +26,12 @@ public class ConsumerCreatorUsecase {
      */
     public static Consumer<byte[]> execute(
             PulsarClient pulsarClient,
+            PulsarConfig pulsarConfig,
             String topicName,
             String consumerId,
             String subscriptionName,
-            Boolean withKeys
+            Boolean withKeys,
+            Boolean redeliveryEnable
     ) throws PulsarClientException {
         SubscriptionType subscriptionType;
         if (withKeys) {
@@ -37,11 +39,23 @@ public class ConsumerCreatorUsecase {
         } else {
             subscriptionType = SubscriptionType.Shared;
         }
+        int redeliveryCount;
+        if (redeliveryEnable) {
+            redeliveryCount = pulsarConfig.getMaxRedeliveryCount();
+        } else {
+            redeliveryCount = 0;
+        }
         Consumer<byte[]> consumer = pulsarClient.newConsumer()
                 .consumerName(consumerId)
                 .topic(topicName)
+                .ackTimeout(1, TimeUnit.SECONDS)
                 .subscriptionType(subscriptionType)
                 .subscriptionName(subscriptionName)
+                .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
+                .deadLetterPolicy(DeadLetterPolicy.builder()
+                        .maxRedeliverCount(redeliveryCount)
+                        .deadLetterTopic(pulsarConfig.getTopicDeadLetterName())
+                        .build())
                 .subscribe();
 
         LOG.info(String.format("Consumer created: ID=%s; TOPIC=%s; subscriptionType=%s; subscriptionName=%s",

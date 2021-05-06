@@ -21,9 +21,22 @@
 sudo ./pulsar-admin namespaces set-deduplication public/namespace-demo --enable false
 
 3. Гарантия доставки EFFECTIVELY_ONCE + дедупликация - ровно-однократная
-Сообщения отправляются одним продюсером в топик topic-part6-demo и одновременно вычитываются тремя косьюмерами с помощью EXCLUSIVE подписки.
-Для сообщений указывается уникальный ключ. На один ключ отправляется три версии сообщения.
-Количество отправленных уникальных сообщений должно быть не меньше количества принятых сообщений.
+
+a) Сообщения отправляются одним продюсером в топик "persistent://public/namespace-demo/topic-effectively-demo" 
+    и одновременно вычитываются тремя косьюмерами с помощью EXCLUSIVE подписки.
+    Для сообщений указывается уникальный ключ. На один ключ отправляется три версии сообщения.
+    Количество отправленных уникальных сообщений должно быть равно количеству принятых сообщений.
+
+б) Сообщения отправляются одним продюсером в топик "persistent://public/namespace-demo/topic-effectively-compacted-demo" 
+   и одновременно вычитываются тремя косьюмерами с помощью EXCLUSIVE подписки.
+   Для сообщений указывается уникальный ключ. На один ключ отправляется три версии сообщения.
+   Количество отправленных уникальных сообщений должно быть в три раза больше количества принятых сообщений.
+   
+Настройка автоматического запуска уплотнения:
+sudo ./pulsar-admin namespaces set-compaction-threshold --threshold 1M public/namespace-demo
+
+Запуск уплотнения вручную:
+sudo ./pulsar-admin topics compact persistent://public/namespace-demo/topic-effectively-compacted-demo
 
 Настройка дедупликация для пространства имен:
 sudo ./pulsar-admin namespaces set-deduplication public/namespace-demo --enable true

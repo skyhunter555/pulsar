@@ -11,6 +11,7 @@ import ru.syntez.integration.pulsar.usecases.run.RunTTLTestUsecase;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,25 +42,25 @@ public class IntegrationPulsarApplication {
         try {
             client = PulsarClient.builder()
                     .serviceUrl(config.getBrokers())
+                    .operationTimeout(config.getOperationTimeoutSeconds(), TimeUnit.SECONDS)
+                    .connectionTimeout(config.getConnectTimeoutSeconds(),  TimeUnit.SECONDS)
                     .build();
 
             //кейс ATLEAST_ONCE
             LOG.info("******************** Запуск проверки гарантии доставки ATLEAST_ONCE без ключей...");
-            RunGuarantiesTestUsecase.execute(config, client, false, false, config.getTopicAtleastName());
-
+            RunGuarantiesTestUsecase.execute(config, client, false, false, config.getTopicAtleastName(), true);
             LOG.info("******************** Запуск проверки гарантии доставки ATLEAST_ONCE с ключами...");
-            RunGuarantiesTestUsecase.execute(config, client, true, false, config.getTopicAtleastName());
+            RunGuarantiesTestUsecase.execute(config, client, true, false, config.getTopicAtleastName(), true);
 
             //кейс ATMOST_ONCE
             LOG.info("******************** Запуск проверки гарантии доставки ATMOST_ONCE без ключей...");
-            RunGuarantiesTestUsecase.execute(config, client,  false, false, config.getTopicAtmostName());
-
+            RunGuarantiesTestUsecase.execute(config, client, false, false, config.getTopicAtmostName(), false);
             LOG.info("******************** Запуск проверки гарантии доставки ATMOST_ONCE с ключами...");
-            RunGuarantiesTestUsecase.execute(config, client,  true, false, config.getTopicAtmostName());
+            RunGuarantiesTestUsecase.execute(config, client, true, false, config.getTopicAtmostName(), false);
 
             //кейс EFFECTIVELY_ONCE
             LOG.info("******************** Запуск проверки гарантии доставки EFFECTIVELY_ONCE + дедупликация...");
-            RunGuarantiesTestUsecase.execute(config, client,  true, true, config.getTopicEffectivelyName());
+            RunGuarantiesTestUsecase.execute(config, client, true, true, config.getTopicEffectivelyName(), true);
 
             //кейс TTL
             LOG.info("******************** Запуск проверки TTL...");
