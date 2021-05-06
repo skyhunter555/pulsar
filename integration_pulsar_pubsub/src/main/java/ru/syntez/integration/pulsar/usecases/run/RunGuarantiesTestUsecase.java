@@ -9,11 +9,13 @@ import ru.syntez.integration.pulsar.scenarios.ProducerTestScenario;
 import ru.syntez.integration.pulsar.scenarios.ProducerWithKeys;
 import ru.syntez.integration.pulsar.scenarios.ProducerWithVersions;
 import ru.syntez.integration.pulsar.scenarios.ProducerWithoutKeys;
+import ru.syntez.integration.pulsar.usecases.GenerateErrorMessagesUsecase;
 import ru.syntez.integration.pulsar.usecases.ResultOutputUsecase;
 import ru.syntez.integration.pulsar.usecases.StartConsumerUsecase;
 import ru.syntez.integration.pulsar.usecases.create.ConsumerCreatorUsecase;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,7 +39,8 @@ public class RunGuarantiesTestUsecase {
             Boolean withKeys,
             Boolean withVersions,
             String topicName,
-            Boolean readCompacted
+            Boolean readCompacted,
+            Boolean redeliveryEnable
     ) throws InterruptedException {
 
         Runnable producerScenario = () -> {
@@ -51,12 +54,15 @@ public class RunGuarantiesTestUsecase {
         ExecutorService executorService = Executors.newFixedThreadPool(consumerCount + 1);
         executorService.execute(producerScenario);
 
+        // пауза что бы успеть выполнить комманду на pulsar
+        // executorService.awaitTermination(2, TimeUnit.MINUTES);
+
         for (int i = 0; i < consumerCount; i++) {
             String consumerId = Integer.toString(i + 1);
             executorService.execute(() -> {
                 Consumer consumer = null;
                 try {
-                    consumer = createAndStartConsumer(client, consumerId, withKeys, topicName, readCompacted);
+                    consumer = createAndStartConsumer(client, config, consumerId, withKeys, topicName, readCompacted, redeliveryEnable);
                 } catch (PulsarClientException e) {
                     e.printStackTrace();
                 } finally {
@@ -78,10 +84,13 @@ public class RunGuarantiesTestUsecase {
 
     private static Consumer createAndStartConsumer(
             PulsarClient client,
+            PulsarConfig config,
             String consumerId,
             Boolean withKeys,
             String topicName,
-            Boolean readCompacted) throws PulsarClientException {
+            Boolean readCompacted,
+            Boolean redeliveryEnable
+    ) throws PulsarClientException {
         String subscriptionName;
         if (withKeys) {
             subscriptionName = SubscriptionNameEnum.SUBSCRIPTION_KEY_NAME.getCode();
@@ -90,11 +99,17 @@ public class RunGuarantiesTestUsecase {
         }
         Consumer<byte[]> consumer = ConsumerCreatorUsecase.execute(
                 client,
+                config,
                 topicName,
                 consumerId,
                 subscriptionName,
-                readCompacted);
-        recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, false));
+                readCompacted,
+                redeliveryEnable);
+
+        //Генерация идентификаторов документов, для эмуляции ошибки в консюмере
+        Set deadMessageMap = GenerateErrorMessagesUsecase.execute(config.getErrorMessageCount(), config.getMessageCount());
+
+        recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, false, deadMessageMap));
 
         return consumer;
     }

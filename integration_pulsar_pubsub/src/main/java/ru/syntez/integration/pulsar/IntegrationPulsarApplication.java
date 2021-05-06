@@ -43,17 +43,17 @@ public class IntegrationPulsarApplication {
 
             //кейс ATLEAST_ONCE
             LOG.info("******************** Запуск проверки гарантии доставки ATLEAST_ONCE с ключами...");
-            RunGuarantiesTestUsecase.execute(config, client, true, false, config.getTopicAtleastName(), false);
+            RunGuarantiesTestUsecase.execute(config, client, true, false, config.getTopicAtleastName(), false, true);
 
             //кейс ATMOST_ONCE
             LOG.info("******************** Запуск проверки гарантии доставки ATMOST_ONCE с ключами...");
-            RunGuarantiesTestUsecase.execute(config, client,  true, false, config.getTopicAtmostName(), false);
+            RunGuarantiesTestUsecase.execute(config, client,  true, false, config.getTopicAtmostName(), false, false);
 
             //кейс EFFECTIVELY_ONCE
             LOG.info("******************** Запуск проверки гарантии доставки EFFECTIVELY_ONCE + дедупликация без сжатия...");
-            RunGuarantiesTestUsecase.execute(config, client,  true, true, config.getTopicEffectivelyName(), false);
+            RunGuarantiesTestUsecase.execute(config, client,  true, true, config.getTopicEffectivelyName(), false, true);
             LOG.info("******************** Запуск проверки гарантии доставки EFFECTIVELY_ONCE + дедупликация с сжатием...");
-            RunGuarantiesTestUsecase.execute(config, client,  true, true, config.getTopicEffectivelyName(), true);
+            RunGuarantiesTestUsecase.execute(config, client,  true, true, config.getTopicEffectivelyName(), true, true);
 
             //кейс TTL
             LOG.info("******************** Запуск проверки TTL...");

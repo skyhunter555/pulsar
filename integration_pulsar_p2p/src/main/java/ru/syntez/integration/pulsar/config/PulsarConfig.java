@@ -12,6 +12,7 @@ public class PulsarConfig {
     private Boolean recordLogOutputEnabled;
     private Integer operationTimeoutSeconds;
     private Integer connectTimeoutSeconds;
+    private Integer errorMessageCount;
 
     private String  topicAtleastName;
     private String  topicAtmostName;

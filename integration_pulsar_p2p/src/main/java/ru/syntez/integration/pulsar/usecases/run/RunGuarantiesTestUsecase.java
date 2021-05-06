@@ -9,10 +9,14 @@ import ru.syntez.integration.pulsar.scenarios.ProducerTestScenario;
 import ru.syntez.integration.pulsar.scenarios.ProducerWithKeys;
 import ru.syntez.integration.pulsar.scenarios.ProducerWithVersions;
 import ru.syntez.integration.pulsar.scenarios.ProducerWithoutKeys;
+import ru.syntez.integration.pulsar.usecases.GenerateErrorMessagesUsecase;
 import ru.syntez.integration.pulsar.usecases.ResultOutputUsecase;
 import ru.syntez.integration.pulsar.usecases.StartConsumerUsecase;
 import ru.syntez.integration.pulsar.usecases.create.ConsumerCreatorUsecase;
+
+import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -51,7 +55,7 @@ public class RunGuarantiesTestUsecase {
         executorService.execute(producerScenario);
 
         for (int i = 0; i < consumerCount; i++) {
-            String consumerId = Integer.toString(i + 1);
+            String consumerId = generateConsumerId(i);
             executorService.execute(() -> {
                 Consumer consumer = null;
                 try {
@@ -73,6 +77,7 @@ public class RunGuarantiesTestUsecase {
         //Минуты должно хватить на обработку всех сообщений
         executorService.awaitTermination(1, TimeUnit.MINUTES);
         ResultOutputUsecase.execute(msgSentCounter.get(), recordSetMap);
+        recordSetMap.clear();
     }
 
     private static Consumer createAndStartConsumer(
@@ -97,8 +102,18 @@ public class RunGuarantiesTestUsecase {
                 subscriptionName,
                 withKeys,
                 redeliveryEnable);
-        recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled()));
+
+        //Генерация идентификаторов документов, для эмуляции ошибки в консюмере
+        Set deadMessageMap = GenerateErrorMessagesUsecase.execute(config.getErrorMessageCount(), config.getMessageCount());
+
+        recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled(), deadMessageMap));
 
         return consumer;
     }
+
+    private static String generateConsumerId(int index) {
+        Date now = new Date();
+        return String.format("%s_%s", index, now.getTime());
+    }
+
 }

@@ -46,7 +46,7 @@ public class RunFilterFunctionTestUsecase {
                         client, config, config.getTopicOutputFilterName(), consumerId,
                         String.format("%s_%s", SubscriptionNameEnum.SUBSCRIPTION_KEY_NAME.getCode(), consumerId),
                         true, true);
-                recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled()));
+                recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled(), null));
                 consumer.close();
             } catch (PulsarClientException e) {
                 e.printStackTrace();

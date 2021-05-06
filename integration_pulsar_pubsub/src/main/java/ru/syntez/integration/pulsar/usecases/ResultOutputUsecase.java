@@ -1,6 +1,7 @@
 package ru.syntez.integration.pulsar.usecases;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -22,10 +23,12 @@ public class ResultOutputUsecase {
         LOG.info("Проверка завершена. Результаты: ");
         LOG.info(String.format("Количество отправленных уникальных сообщений: %s", msgSent));
         LOG.info(String.format("Количество всех принятых сообщений: %s", msgReceived));
-        int uniqueCount = 0;
+
+        Set uniqueMessage = new HashSet();
+
         for (Map.Entry entry : consumerRecordSetMap.entrySet()) {
             Set consumerRecordSet = (Set) entry.getValue();
-            uniqueCount = uniqueCount + consumerRecordSet.size();
+            uniqueMessage = consumerRecordSet;
             BigDecimal percent = BigDecimal.ZERO;
             if (msgReceived > 0) {
                 percent = (BigDecimal.valueOf(100).multiply(BigDecimal.valueOf(consumerRecordSet.size())))
@@ -37,7 +40,7 @@ public class ResultOutputUsecase {
                     percent
             ));
         }
-        LOG.info(String.format("Количество принятых уникальных сообщений: %s", uniqueCount));
+        LOG.info(String.format("Количество принятых уникальных сообщений: %s", uniqueMessage.size()));
     }
 
 }

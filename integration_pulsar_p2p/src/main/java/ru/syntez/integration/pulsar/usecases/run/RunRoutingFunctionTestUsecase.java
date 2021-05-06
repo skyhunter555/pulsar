@@ -47,7 +47,7 @@ public class RunRoutingFunctionTestUsecase {
                         String.format("%s_%s", SubscriptionNameEnum.SUBSCRIPTION_KEY_NAME.getCode(), consumerId),
                         true, true
                 );
-                recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled()));
+                recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled(), null));
             } catch (PulsarClientException e) {
                 e.printStackTrace();
             }
@@ -60,7 +60,7 @@ public class RunRoutingFunctionTestUsecase {
                         String.format("%s_%s", SubscriptionNameEnum.SUBSCRIPTION_KEY_NAME.getCode(), consumerId),
                         true, true
                 );
-                recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled()));
+                recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled(), null));
             } catch (PulsarClientException e) {
                 e.printStackTrace();
             }

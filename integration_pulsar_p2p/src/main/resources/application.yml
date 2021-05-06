@@ -6,6 +6,7 @@ maxRedeliveryCount: 5
 recordLogOutputEnabled: false
 operationTimeoutSeconds: 2
 connectTimeoutSeconds: 3
+errorMessageCount: 2
 
 topicAtleastName: "persistent://public/namespace-demo/topic-atleast-demo"
 topicAtmostName: "persistent://public/namespace-demo/topic-atmost-demo"

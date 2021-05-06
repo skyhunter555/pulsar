@@ -21,6 +21,7 @@ public class ConsumerCreatorUsecase {
      * @param consumerId       - идентификатор консьюмера
      * @param subscriptionName - наименование подписки
      * @param withKeys         - признак наличия ключа в сообщении
+     * @param redeliveryEnable - признак передоставки сообщения
      * @return
      * @throws PulsarClientException
      */
@@ -40,15 +41,18 @@ public class ConsumerCreatorUsecase {
             subscriptionType = SubscriptionType.Shared;
         }
         int redeliveryCount;
+        int ackTimeout;
         if (redeliveryEnable) {
             redeliveryCount = pulsarConfig.getMaxRedeliveryCount();
+            ackTimeout = 1;
         } else {
             redeliveryCount = 0;
+            ackTimeout = 0;
         }
         Consumer<byte[]> consumer = pulsarClient.newConsumer()
                 .consumerName(consumerId)
                 .topic(topicName)
-                .ackTimeout(1, TimeUnit.SECONDS)
+                .ackTimeout(ackTimeout, TimeUnit.SECONDS)
                 .subscriptionType(subscriptionType)
                 .subscriptionName(subscriptionName)
                 .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
