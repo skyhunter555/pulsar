@@ -2,7 +2,9 @@ package ru.syntez.integration.pulsar;
 
 import org.apache.pulsar.client.api.*;
 import org.yaml.snakeyaml.Yaml;
+import ru.syntez.integration.pulsar.usecases.run.RunAggregationByCountUsecase;
 import ru.syntez.integration.pulsar.usecases.run.RunAggregationByTimeUsecase;
+import ru.syntez.integration.pulsar.usecases.run.RunTransformFunctionTestUsecase;
 
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -39,14 +41,14 @@ public class IntegrationPulsarApplication {
                     .serviceUrl(config.getBrokers())
                     .build();
 
-        // //кейс Применение преобразования формата сообщения в реальном времени в потоковом режиме.
-        // LOG.info("******************** Запуск проверки преобразования формата сообщения...");
-        // RunTransformFunctionTestUsecase.execute(config, client);
+            //кейс Применение преобразования формата сообщения в реальном времени в потоковом режиме.
+            LOG.info("******************** Запуск проверки преобразования формата сообщения...");
+            RunTransformFunctionTestUsecase.execute(config, client);
 
-        // //кейс Агрегация по 100 сообщений из одного топика с целью получения единого сообщения содержащего данные всех переданных сообщений.
-        // //Агрегация сообщений из разных топиков.
-        // LOG.info("******************** Запуск проверки агрегации по 100 сообщений...");
-        // RunAggregationByCountUsecase.execute(config, client);
+            //кейс Агрегация по 100 сообщений из одного топика с целью получения единого сообщения содержащего данные всех переданных сообщений.
+            //Агрегация сообщений из разных топиков.
+            LOG.info("******************** Запуск проверки агрегации по 100 сообщений...");
+            RunAggregationByCountUsecase.execute(config, client);
 
             //кейс Событие в формате JSON содержит поле целое числовое поле amount
             //Рассчитать сумму по полю amount за последнюю минуту
