@@ -12,11 +12,14 @@ import java.io.Serializable;
  * RoutingDocument model
  *
  * @author Skyhunter
- * @date 04.05.2021
+ * @date 18.01.2021
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Data
 public class RoutingDocument implements Serializable {
+
+    private DocumentTypeEnum docType;
     private int docId;
     private int amount;
+
 }

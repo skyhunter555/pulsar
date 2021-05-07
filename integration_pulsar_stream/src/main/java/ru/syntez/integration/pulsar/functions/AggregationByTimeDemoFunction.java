@@ -3,43 +3,38 @@ package ru.syntez.integration.pulsar.functions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.pulsar.functions.api.*;
 import ru.syntez.integration.pulsar.entities.RoutingDocument;
+
 import java.util.Collection;
 import java.util.Date;
 
-public class AggregationByTimeDemoFunction implements WindowFunction<String, String> {
+public class AggregationByTimeDemoFunction implements WindowFunction<String, Void> {
 
-    private ObjectMapper jsonMapper = new ObjectMapper();
-    private long lastDurationMs = 60000;
+    private final String TOPIC_OUTPUT = "topic-output-demo";
+    private final ObjectMapper jsonMapper = new ObjectMapper();
 
     @Override
-    public String process(Collection<Record<String>> inputs, WindowContext context) {
+    public Void process(Collection<Record<String>> inputs, WindowContext context) throws Exception {
 
-        int documentsAmount = 0;
-        int recordsCount = 0;
         Date nowDate = new Date();
+        int documentsAmount = 0;
+
         context.getLogger().info(String.format("AggregationByTimeDemoFunction started=%s, recordsCount=%s", nowDate, inputs.size()));
+
         for (Record<String> record : inputs) {
-
-            context.getLogger().info(String.format("AggregationByTimeDemoFunction record value=%s", record));
-
-            if (record.getEventTime().isPresent()) {
-                Long eventTimestamp =  record.getEventTime().get();
-                if (nowDate.getTime() - eventTimestamp < lastDurationMs) {
-                    RoutingDocument document;
-                    try {
-                        document = jsonMapper.readValue(record.getValue(), RoutingDocument.class);
-                    } catch (Exception ex) {
-                        context.getLogger().error("Failed to read JSON string: " + ex.getMessage());
-                        return null;
-                    }
-                    context.getLogger().info(String.format("recordEventTime=%s, documentsAmount=%s", new Date(eventTimestamp), documentsAmount));
-                    documentsAmount = documentsAmount + document.getAmount();
-                    recordsCount++;
-                }
+            try {
+                RoutingDocument document = jsonMapper.readValue(record.getValue(), RoutingDocument.class);
+                documentsAmount = documentsAmount + document.getAmount();
+            } catch (Exception ex) {
+                context.getLogger().error(ex.getMessage());
             }
-
         }
-        return String.format("Calculated documentsAmount=%s from recordCount=%s", documentsAmount, recordsCount);
+
+        context.publish(
+            TOPIC_OUTPUT,
+            String.format("Result of aggregation amount: Date=%s, Count=%s, Amount=%s", nowDate, inputs.size(), documentsAmount)
+        );
+
+        return null;
     }
 }
 

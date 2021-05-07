@@ -7,6 +7,7 @@ public class PulsarConfig {
 
     private String  brokers;
     private Integer messageCount;
+    private Boolean recordLogOutputEnabled;
     private String  topicInputName;
     private String  topicInputOrderName;
     private String  topicInputInvoiceName;
