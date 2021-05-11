@@ -16,7 +16,7 @@ import java.util.logging.Logger;
  * Main class
  *
  * @author Skyhunter
- * @date 23.04.2021
+ * @date 11.05.2021
  */
 public class IntegrationPulsarApplication {
 

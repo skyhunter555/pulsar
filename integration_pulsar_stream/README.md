@@ -1,10 +1,10 @@
-## Apache Pulsar: пример поддержки реализации очереди сообщений Р2Р
+## Apache Pulsar: пример поддержки реализации потоковой обработки данных и агрегации
 
 #Конфигурация кластера
 
 Кластер из 3 брокеров и 6 узлов bookies
 1 топик для входящих сообщений и два топика для преобразованных исходящих сообщений.
-1 продюсер
+1 продюсер для первого кейса и 2 для второго
 3 консюмера в одной группе
 
 #Кейсы для реализации 
@@ -24,37 +24,11 @@
 Для загрузки функци необходимо пометить jar примера в папку apache-pulsar-2.7.1/lib
 и выполнить комманду загрузки для каждой функции
 
-sudo ./pulsar-admin functions create \
---jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-stream-1.0.0.jar \
---classname ru.syntez.integration.pulsar.functions.TransformDemoFunction \
---tenant public \ 
---namespace default \
---name transformDemo \
---inputs persistent://public/default/topic-input-demo
+sudo ./pulsar-admin functions create --jar /opt/pulsar/apache-pulsar-2.7.1/lib/integration-pulsar-stream-1.0.0.jar --classname ru.syntez.integration.pulsar.functions.TransformDemoFunction --tenant public --namespace default --name transformDemo --inputs persistent://public/default/topic-input-demo
 
-sudo ./pulsar-admin functions create \
---jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-stream-1.0.0.jar \
---classname ru.syntez.integration.pulsar.functions.AggregationByCountDemoFunction \ 
---tenant public \ 
---namespace default \
---name routingByKey \
---inputs persistent://public/default/topic-input-route-demo
+sudo ./pulsar-admin functions create --jar /opt/pulsar/apache-pulsar-2.7.1/lib/integration-pulsar-stream-1.0.0.jar --classname ru.syntez.integration.pulsar.functions.AggregationByCountDemoFunction --tenant public --namespace default --name aggrByCountDemo --inputs persistent://public/default/topic-input-invoice-demo,persistent://public/default/topic-input-order-demo
 
-sudo ./pulsar-admin functions create \
---jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-stream-1.0.0.jar \
---classname ru.syntez.integration.pulsar.functions.TransformDemoFunction \
---tenant public \ 
---namespace default \
---name filterByKey \
---inputs persistent://public/default/topic-input-filter-demo
-
-sudo ./pulsar-admin functions create \
---jar /opt/apache-pulsar-2.7.1/lib/integration-pulsar-stream-1.0.0.jar \
---classname ru.syntez.integration.pulsar.functions.AggregationByTimeDemoFunction \
---tenant public \ 
---namespace default \
---name routingByBody \
---inputs persistent://public/default/topic-input-route-demo
+sudo ./pulsar-admin functions create --jar /opt/pulsar/apache-pulsar-2.7.1/lib/integration-pulsar-stream-1.0.0.jar --classname ru.syntez.integration.pulsar.functions.AggregationByTimeDemoFunction --tenant public --namespace default --name aggrByTimeDemo --inputs persistent://public/default/topic-input-json-demo --output persistent://public/default/topic-output-demo --window-length-duration-ms 60000 --sliding-interval-duration-ms 60000
 
 Удаление функции:
 sudo ./pulsar-admin functions delete \
@@ -69,7 +43,7 @@ sudo mkdir /opt/pulsar
 sudo wget https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=pulsar/pulsar-2.7.1/apache-pulsar-2.7.1-bin.tar.gz
 sudo tar xvf apache-pulsar-2.7.1-bin.tar.gz
 sudo mv apache-pulsar-2.7.1/ /opt/pulsar
-cd /opt/pulsar/bin
+cd /opt/pulsar/apache-pulsar-2.7.1/bin
 sudo ./pulsar standalone
 
 #Создание кластера из 3-х брокеров
@@ -83,7 +57,6 @@ pulsar-admin namespaces create public/namespace-demo
 #Настройка TTL у пространства имен
 
 #Создание топиков
-1 Для первых 4 кейсов
 pulsar-admin topics create-partitioned-topic \
   persistent://public/namespace-demo/topic-part6-demo \
   --partitions 6
@@ -92,4 +65,4 @@ pulsar-admin topics create-partitioned-topic \
 mvn clean install
 
 ## Запуск приложения с конфигурацией
-java -jar integration-pulsar-p2p-1.0.0.jar application.yml
+java -jar integration-pulsar-stream-1.0.0.jar application.yml
