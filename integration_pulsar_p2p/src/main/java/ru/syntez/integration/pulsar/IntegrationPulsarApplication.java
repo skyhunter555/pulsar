@@ -43,7 +43,7 @@ public class IntegrationPulsarApplication {
             client = PulsarClient.builder()
                     .serviceUrl(config.getBrokers())
                     .operationTimeout(config.getOperationTimeoutSeconds(), TimeUnit.SECONDS)
-                   // .connectionTimeout(config.getConnectTimeoutSeconds(),  TimeUnit.SECONDS)
+                    .connectionTimeout(config.getConnectTimeoutSeconds(),  TimeUnit.SECONDS)
                     .build();
 
             //кейс ATLEAST_ONCE

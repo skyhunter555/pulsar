@@ -113,6 +113,7 @@ sudo ./pulsar-admin clusters create cluster-3 --url http://localhost:8083 --brok
 pulsar-admin namespaces create public/namespace-demo
 
 #Настройка TTL у пространства имен
+sudo ./pulsar-admin namespaces set-message-ttl public/namespace-demo --messageTTL 60
 
 #Создание топиков
 1 Для первых 4 кейсов

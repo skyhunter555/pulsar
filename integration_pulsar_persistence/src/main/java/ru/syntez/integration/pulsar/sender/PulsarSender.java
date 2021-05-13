@@ -27,6 +27,13 @@ public class PulsarSender {
             try {
                 RoutingDocument document = docGenerator.create(index);
                 Optional<String> msgKey = Optional.ofNullable(keyGenerator.generate(document));
+
+               // if (!producer.isConnected()) {
+               //     LOG.log(Level.SEVERE, "Produce is not connected");
+               //     Thread.sleep(3000);
+               //     continue;
+               // }
+
                 if (msgKey.isPresent())
                     producer.newMessage()
                             .key(msgKey.get())
@@ -34,6 +41,9 @@ public class PulsarSender {
                             .send();
                 else
                     producer.newMessage().value(SerializeDocumentUsecase.execute(document)).send();
+
+                LOG.log(Level.SEVERE, String.format("Produce message %s with key=%s to topic", index, msgKey.get()));
+                Thread.sleep(2000);
 
             } catch (Exception e) {
                 LOG.log(Level.SEVERE, "Produce message exception was thrown", e);

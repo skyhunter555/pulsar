@@ -3,7 +3,8 @@ package ru.syntez.integration.pulsar;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.yaml.snakeyaml.Yaml;
 import ru.syntez.integration.pulsar.config.PulsarConfig;
-import ru.syntez.integration.pulsar.usecases.run.RunTTLTestUsecase;
+import ru.syntez.integration.pulsar.usecases.run.RunReceivingAfterReconnectUsecase;
+import ru.syntez.integration.pulsar.usecases.run.RunSendingAfterReconnectUsecase;
 
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -37,17 +38,25 @@ public class IntegrationPulsarApplication {
         }
 
         try {
+
             client = PulsarClient.builder()
                     .serviceUrl(config.getBrokers())
                     .operationTimeout(config.getOperationTimeoutSeconds(), TimeUnit.SECONDS)
                     .connectionTimeout(config.getConnectTimeoutSeconds(),  TimeUnit.SECONDS)
+                    .keepAliveInterval(60,  TimeUnit.SECONDS)
+                    .maxLookupRequests(100)
+                    .maxNumberOfRejectedRequestPerConnection(10)
+                    .maxConcurrentLookupRequests(10)
                     .build();
 
-            //кейс TTL
-            LOG.info("******************** Запуск проверки TTL...");
-            RunTTLTestUsecase.execute(config, client);
+            //кейс Автоматический реконнект клиентов при сбое узла кластера
+            //LOG.info("******************** Запуск проверки отправки после реконнекта...");
+            //RunSendingAfterReconnectUsecase.execute(config, client);
 
-            client.close();
+            LOG.info("******************** Запуск проверки приема после реконнекта...");
+            RunReceivingAfterReconnectUsecase.execute(config, client);
+
+            client.shutdown();
         } catch (Exception e) {
             e.printStackTrace();
         }
