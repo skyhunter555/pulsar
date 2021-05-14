@@ -1,11 +1,20 @@
 #default config value
-brokers: "pulsar://192.168.56.101:6650"
-messageCount: 10000
-timeoutBeforeConsume: 10
+adminUrl: "http://192.168.56.101"
+adminPort: "8080"
+brokersUrl: "pulsar://192.168.56.101"
+brokerPort: "6650"
+brokerPort1: "6651"
+brokerPort2: "6652"
+brokerPort3: "6653"
+messageCount: 1000
+sendIntervalMs: 2000
+receiveIntervalMs: 2000
+timeoutBeforeConsume: 1
 maxRedeliveryCount: 5
 recordLogOutputEnabled: true
 operationTimeoutSeconds: 3
 connectTimeoutSeconds: 3
 
-topicName: "persistent://public/namespace-demo/topic-part5-demo"
+topicName: "persistent://public/default/topic-part5-demo"
+topicNonPersistentName: "non-persistent://public/default/topic-np-demo"
 topicDeadLetterName: "persistent://public/default/topic-output-retry"

@@ -28,8 +28,8 @@ public class ProducerCreatorUsecase {
         Producer<byte[]> producer = pulsarClient.newProducer()
                 .topic(topicName)
                 .producerName("producer-1")
-                .sendTimeout(0, TimeUnit.SECONDS)
-                .compressionType(CompressionType.LZ4)
+                .sendTimeout(10, TimeUnit.SECONDS)
+                //.compressionType(CompressionType.LZ4)
                 .create();
 
         LOG.info(String.format("Producer created: ID=%s; TOPIC=%s.", producer.getProducerName(), topicName));

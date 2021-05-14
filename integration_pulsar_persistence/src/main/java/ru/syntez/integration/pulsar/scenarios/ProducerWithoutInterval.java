@@ -12,15 +12,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Реализация тестового сценария при котором будут записаны сообщения с уникальным ключем
+ * Реализация тестового сценария при котором будут записаны сообщения с уникальным ключем без интервала при отправке
  */
-public class ProducerWithKeys implements ProducerTestScenario {
-    private final static Logger LOG = Logger.getLogger(ProducerWithKeys.class.getName());
+public class ProducerWithoutInterval implements ProducerTestScenario {
+    private final static Logger LOG = Logger.getLogger(ProducerWithoutInterval.class.getName());
 
     private final PulsarClient client;
     private final PulsarConfig config;
 
-    public ProducerWithKeys(PulsarClient client, PulsarConfig config) {
+    public ProducerWithoutInterval(PulsarClient client, PulsarConfig config) {
         this.client = client;
         this.config = config;
     }
@@ -31,8 +31,7 @@ public class ProducerWithKeys implements ProducerTestScenario {
             PulsarSender sender = new PulsarSender(producer);
             int sentCount = sender.sendWithDocTypeKey(
                     RoutingDocument::createAny,
-                    config.getMessageCount(),
-                    config.getSendIntervalMs()
+                    config.getMessageCount(),0
             );
             producer.flush();
             return sentCount;
@@ -44,6 +43,18 @@ public class ProducerWithKeys implements ProducerTestScenario {
 
     @Override
     public int run(String topicName, List<String> replicationClusters) {
-        return 0;
+        try (Producer<byte[]> producer = ProducerCreatorUsecase.execute(client, topicName)) {
+            PulsarSender sender = new PulsarSender(producer);
+            int sentCount = sender.sendToCluster(
+                    RoutingDocument::createAny,
+                    config.getMessageCount(),0,
+                    replicationClusters
+            );
+            producer.flush();
+            return sentCount;
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Error producing documents to pulsar", e);
+            return 0;
+        }
     }
 }

@@ -35,26 +35,32 @@ public class StartConsumerUsecase {
      */
     public static Set<String> execute(
             Consumer<byte[]> consumer,
-            boolean recordLogOutputEnabled
+            boolean recordLogOutputEnabled,
+            int receiveIntervalMs,
+            boolean acknowledge
     ) throws PulsarClientException, InterruptedException {
 
         Set<String> consumerRecordSet = new HashSet<>();
         AtomicInteger msgReceivedCounter = new AtomicInteger(0);
 
         while (true) {
-            Message message = consumer.receive(5, TimeUnit.MINUTES);
+            Message message = consumer.receive(5, TimeUnit.SECONDS);
             if (message == null) {
-                LOG.info("No message to consume after waiting for 20 seconds.");
+                LOG.info("No message to consume after waiting for 5 seconds.");
                 break;
             }
-            //Эмуляция обработки сообщения
-            Thread.sleep(2000);
 
-            consumer.acknowledge(message);
+            //Эмуляция обработки сообщения
+            Thread.sleep(receiveIntervalMs);
+            if (acknowledge) {
+                consumer.acknowledge(message);
+            }
             consumerRecordSet.add(new String(message.getData()));
             msgReceivedCounter.incrementAndGet();
             if (recordLogOutputEnabled) {
-                LOG.info(String.format("Consumer %s read record key=%s, number=%s, messageId=%s, value=%s, topic=%s",
+                System.out.println(
+                //LOG.info(
+                        String.format("Consumer %s read record key=%s, number=%s, messageId=%s, value=%s, topic=%s",
                         consumer.getConsumerName(),
                         message.getKey(),
                         msgReceivedCounter,

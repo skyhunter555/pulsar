@@ -1,10 +1,12 @@
 package ru.syntez.integration.pulsar;
 
+import org.apache.pulsar.client.admin.PulsarAdmin;
+import org.apache.pulsar.client.admin.PulsarAdminBuilder;
 import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.PulsarClientException;
 import org.yaml.snakeyaml.Yaml;
 import ru.syntez.integration.pulsar.config.PulsarConfig;
-import ru.syntez.integration.pulsar.usecases.run.RunReceivingAfterReconnectUsecase;
-import ru.syntez.integration.pulsar.usecases.run.RunSendingAfterReconnectUsecase;
+import ru.syntez.integration.pulsar.usecases.run.*;
 
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -40,21 +42,28 @@ public class IntegrationPulsarApplication {
         try {
 
             client = PulsarClient.builder()
-                    .serviceUrl(config.getBrokers())
+                    .serviceUrl(String.format("%s:%s", config.getBrokersUrl(), config.getBrokerPort()))
                     .operationTimeout(config.getOperationTimeoutSeconds(), TimeUnit.SECONDS)
                     .connectionTimeout(config.getConnectTimeoutSeconds(),  TimeUnit.SECONDS)
-                    .keepAliveInterval(60,  TimeUnit.SECONDS)
-                    .maxLookupRequests(100)
-                    .maxNumberOfRejectedRequestPerConnection(10)
-                    .maxConcurrentLookupRequests(10)
                     .build();
 
+            PulsarAdmin admin = createPulsarAdmin(String.format("%s:%s", config.getAdminUrl(), config.getAdminPort()));
+
             //кейс Автоматический реконнект клиентов при сбое узла кластера
-            //LOG.info("******************** Запуск проверки отправки после реконнекта...");
-            //RunSendingAfterReconnectUsecase.execute(config, client);
+            LOG.info("******************** Запуск проверки отправки после реконнекта...");
+            RunSendingAfterReconnectUsecase.execute(config, client);
 
             LOG.info("******************** Запуск проверки приема после реконнекта...");
             RunReceivingAfterReconnectUsecase.execute(config, client);
+
+            LOG.info("******************** Запуск проверки не персистентого топика...");
+            RunNonPersistentTestUsecase.execute(config, client);
+
+            LOG.info("******************** Запуск обработки проверки при изменении брокеров...");
+            RunClusterBrokerTestUsecase.execute(config, client, admin);
+
+            LOG.info("******************** Запуск обработки проверки персистентого топика...");
+            RunRetentionTestUsecase.execute(config, client);
 
             client.shutdown();
         } catch (Exception e) {
@@ -64,4 +73,15 @@ public class IntegrationPulsarApplication {
 
     }
 
+    private static PulsarAdmin createPulsarAdmin(String url) {
+        try {
+            LOG.info(String.format("Create Pulsar Admin instance. url=%s", url));
+            PulsarAdminBuilder pulsarAdminBuilder = PulsarAdmin.builder();
+            pulsarAdminBuilder.serviceHttpUrl(url);
+            return pulsarAdminBuilder.build();
+        } catch (PulsarClientException e) {
+            LOG.info(String.format("Failed to create Pulsar Admin instance. url=%s", url));
+        }
+        return null;
+    }
 }
