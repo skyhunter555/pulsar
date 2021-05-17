@@ -1,0 +1,12 @@
+#default config value
+brokersUrl: "pulsar://192.168.56.101"
+brokerPort: "6650"
+messageCount: 1000
+timeoutBeforeConsume: 1
+maxRedeliveryCount: 5
+recordLogOutputEnabled: true
+operationTimeoutSeconds: 3
+connectTimeoutSeconds: 3
+
+topicName: "persistent://public/default/topic-part5-demo"
+topicDeadLetterName: "persistent://public/default/topic-output-retry"
