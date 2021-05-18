@@ -34,7 +34,7 @@ public class ConsumerCreatorUsecase {
         Consumer<byte[]> consumer = pulsarClient.newConsumer()
                 .consumerName(consumerId)
                 .topic(topicName)
-                .subscriptionType(SubscriptionType.Exclusive)
+                .subscriptionType(SubscriptionType.Shared)
                 .ackTimeout(10, TimeUnit.SECONDS)
                 .subscriptionName(subscriptionName)
                 .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)

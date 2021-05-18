@@ -9,7 +9,7 @@ import ru.syntez.integration.pulsar.entities.SubscriptionNameEnum;
 import ru.syntez.integration.pulsar.scenarios.ProducerTestScenario;
 import ru.syntez.integration.pulsar.scenarios.ProducerWithTransaction;
 import ru.syntez.integration.pulsar.usecases.ResultOutputUsecase;
-import ru.syntez.integration.pulsar.usecases.StartConsumerUsecase;
+import ru.syntez.integration.pulsar.usecases.StartConsumerTransactionUsecase;
 import ru.syntez.integration.pulsar.usecases.create.ConsumerCreatorUsecase;
 
 import java.util.Map;
@@ -17,12 +17,12 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Запуск обработки для проверки транзакции
+ * Запуск обработки для проверки транзакции при приеме сообщений
  *
  * @author Skyhunter
  * @date 18.05.2021
  */
-public class RunTransactionTestUsecase {
+public class RunTransactionConsumerTestUsecase {
 
     private static AtomicInteger msgSentCounter = new AtomicInteger(0);
     private static Map recordSetMap = new ConcurrentHashMap<>();
@@ -41,10 +41,7 @@ public class RunTransactionTestUsecase {
                         .withTransactionTimeout(5, TimeUnit.MINUTES)
                         .build()
                         .get();
-
                 msgSentCounter.set(testScenario.run(config.getTopic1Name(), txn));
-                msgSentCounter.set(msgSentCounter.get() + testScenario.run(config.getTopic2Name(), txn));
-
                 txn.commit().get();
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -57,29 +54,37 @@ public class RunTransactionTestUsecase {
 
         executorService.execute(() -> {
             try {
-                String consumerId = "topic1";
+                Transaction txn = client
+                        .newTransaction()
+                        .withTransactionTimeout(5, TimeUnit.MINUTES)
+                        .build()
+                        .get();
+                String consumerId = "consumeAbort";
                 Consumer consumer = ConsumerCreatorUsecase.execute(
                         client, config, config.getTopic1Name(), consumerId,
                         String.format("%s_%s", SubscriptionNameEnum.SUBSCRIPTION_KEY_NAME.getCode(), consumerId));
-                recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled(), 0));
-
+                recordSetMap.put(consumerId, StartConsumerTransactionUsecase.execute(consumer, config.getRecordLogOutputEnabled(), txn));
+                txn.abort().get();
                 consumer.close();
-
-            } catch (PulsarClientException | InterruptedException e) {
+            } catch (PulsarClientException | InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
         });
         executorService.execute(() -> {
             try {
-                String consumerId = "topic2";
+                Transaction txn = client
+                        .newTransaction()
+                        .withTransactionTimeout(5, TimeUnit.MINUTES)
+                        .build()
+                        .get();
+                String consumerId = "consumeCommit";
                 Consumer consumer = ConsumerCreatorUsecase.execute(
-                        client, config, config.getTopic2Name(), consumerId,
+                        client, config, config.getTopic1Name(), consumerId,
                         String.format("%s_%s", SubscriptionNameEnum.SUBSCRIPTION_KEY_NAME.getCode(), consumerId));
-                recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled(), 0));
-
+                recordSetMap.put(consumerId, StartConsumerTransactionUsecase.execute(consumer, config.getRecordLogOutputEnabled(), txn));
+                txn.commit().get();
                 consumer.close();
-
-            } catch (PulsarClientException | InterruptedException e) {
+            } catch (PulsarClientException | InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
         });

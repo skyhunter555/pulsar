@@ -1,8 +1,10 @@
 package ru.syntez.integration.pulsar;
 
 import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.transaction.Transaction;
 import org.yaml.snakeyaml.Yaml;
 import ru.syntez.integration.pulsar.config.PulsarConfig;
+import ru.syntez.integration.pulsar.usecases.StartConsumerTransactionUsecase;
 import ru.syntez.integration.pulsar.usecases.run.*;
 
 import java.io.InputStream;
@@ -48,6 +50,12 @@ public class IntegrationPulsarApplication {
             //кейс Транзакционная запись в несколько топиков и чтение из них.
             LOG.info("******************** Запуск транзакционной пересылки сообщений...");
             RunTransactionTestUsecase.execute(config, client);
+
+            LOG.info("******************** Запуск транзакционной пересылки сообщений и отмены транзакции...");
+            RunTransactionAbortTestUsecase.execute(config, client);
+
+            LOG.info("******************** Запуск транзакционного получения сообщений...");
+            RunTransactionConsumerTestUsecase.execute(config, client);
 
             client.shutdown();
         } catch (Exception e) {

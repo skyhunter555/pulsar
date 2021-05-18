@@ -1,6 +1,7 @@
 package ru.syntez.integration.pulsar.sender;
 
 import org.apache.pulsar.client.api.Producer;
+import org.apache.pulsar.client.api.transaction.Transaction;
 import ru.syntez.integration.pulsar.entities.RoutingDocument;
 import ru.syntez.integration.pulsar.usecases.SerializeDocumentUsecase;
 
@@ -26,7 +27,7 @@ public class PulsarSender {
             MessageKeyGenerator keyGenerator,
             int times,
             int intervalMs,
-            List<String> replicationClusters
+            Transaction txn
     ) {
 
         for (int index = 0; index < times; index++) {
@@ -34,18 +35,13 @@ public class PulsarSender {
                 RoutingDocument document = docGenerator.create(index);
                 Optional<String> msgKey = Optional.ofNullable(keyGenerator.generate(document));
 
-                if (msgKey.isPresent())
-                    producer.newMessage()
-                            .key(msgKey.get())
-                            .value(SerializeDocumentUsecase.execute(document))
-                            .replicationClusters(replicationClusters)
-                            .send();
-                else
-                    producer.newMessage().value(SerializeDocumentUsecase.execute(document)).send();
+                producer.newMessage(txn)
+                        .key(msgKey.get())
+                        .value(SerializeDocumentUsecase.execute(document))
+                        .sendAsync();
 
-                System.out.println(String.format("Produce message %s with key=%s to topic", index, msgKey.get()));
+                LOG.info(String.format("Produce message %s with key=%s to topic", index, msgKey.get()));
                 Thread.sleep(intervalMs);
-
             } catch (Exception e) {
                 LOG.log(Level.WARNING, "Produce message exception was thrown", e);
                 return index;
@@ -54,17 +50,9 @@ public class PulsarSender {
         return times;
     }
 
-    public int sendWithDocIdKey(RoutingDocumentGenerator docGenerator, int times, int intervalMs, List<String> replicationClusters) {
-        return send(docGenerator, doc -> String.format("key_%s", doc.getDocId()), times, intervalMs, replicationClusters);
-    }
 
-    public int sendWithDocTypeKey(RoutingDocumentGenerator docGenerator, int times, int intervalMs) {
-        List<String> replicationClusters = Arrays.asList("standalone");
-        return send(docGenerator, doc -> String.format("%s_%s", doc.getDocType(), doc.getDocId()), times, intervalMs, replicationClusters);
-    }
-
-    public int sendToCluster(RoutingDocumentGenerator docGenerator, int times, int intervalMs, List<String> replicationClusters) {
-        return send(docGenerator, doc -> String.format("key_%s", doc.getDocId()), times, intervalMs, replicationClusters);
+    public int sendWithDocTypeKey(RoutingDocumentGenerator docGenerator, int times, int intervalMs, Transaction txn) {
+        return send(docGenerator, doc -> String.format("%s_%s", doc.getDocType(), doc.getDocId()), times, intervalMs, txn);
     }
 
 }

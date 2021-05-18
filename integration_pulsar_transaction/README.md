@@ -34,7 +34,16 @@ pulsar-admin namespaces create public/namespace-demo
 pulsar-admin topics create-partitioned-topic \
   persistent://public/namespace-demo/topic-part6-demo \
   --partitions 6
-  
+
+#Настройка транзакционного режима
+1. Включить параметр
+   broker.conf
+   stanalone.conf
+   transactionCoordinatorEnabled=true
+
+2. Выполнить команду инициализации координатора транзакций
+   bin/pulsar initialize-transaction-coordinator-metadata -cs 127.0.0.1:2181 -c standalone
+   
 ## Build
 mvn clean install
 

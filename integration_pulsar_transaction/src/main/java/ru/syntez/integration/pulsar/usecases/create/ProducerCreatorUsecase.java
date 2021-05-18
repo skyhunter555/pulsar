@@ -28,7 +28,7 @@ public class ProducerCreatorUsecase {
         Producer<byte[]> producer = pulsarClient.newProducer()
                 .topic(topicName)
                 .producerName("producer-1")
-                .sendTimeout(10, TimeUnit.SECONDS)
+                .sendTimeout(0, TimeUnit.SECONDS)
                 //.compressionType(CompressionType.LZ4)
                 .create();
 

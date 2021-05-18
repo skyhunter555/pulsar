@@ -14,6 +14,7 @@ public class PulsarConfig {
     private Integer operationTimeoutSeconds;
     private Integer connectTimeoutSeconds;
 
-    private String  topicName;
+    private String  topic1Name;
+    private String  topic2Name;
     private String  topicDeadLetterName;
 }

@@ -4,14 +4,9 @@ import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.transaction.Transaction;
-import ru.syntez.integration.pulsar.entities.RoutingDocument;
-import ru.syntez.integration.pulsar.exceptions.TestMessageException;
 
-import java.io.IOException;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -20,11 +15,11 @@ import java.util.logging.Logger;
  * Запуск консюмера на обработку сообщений из заданной подписки
  *
  * @author Skyhunter
- * @date 12.05.2021
+ * @date 18.05.2021
  */
-public class StartConsumerUsecase {
+public class StartConsumerTransactionUsecase {
 
-    private final static Logger LOG = Logger.getLogger(StartConsumerUsecase.class.getName());
+    private final static Logger LOG = Logger.getLogger(StartConsumerTransactionUsecase.class.getName());
 
     /**
      * @param consumer               - созданный экземпляр обработчика
@@ -35,8 +30,7 @@ public class StartConsumerUsecase {
     public static Set<String> execute(
             Consumer<byte[]> consumer,
             boolean recordLogOutputEnabled,
-            int receiveIntervalMs //,
-           // Transaction txn
+            Transaction txn
     ) throws PulsarClientException, InterruptedException {
 
         Set<String> consumerRecordSet = new HashSet<>();
@@ -49,10 +43,7 @@ public class StartConsumerUsecase {
                 break;
             }
 
-            //Эмуляция обработки сообщения
-            Thread.sleep(receiveIntervalMs);
-            //consumer.acknowledge(message);
-            consumer.acknowledgeAsync(message.getMessageId());
+            consumer.acknowledgeAsync(message.getMessageId(), txn);
 
             consumerRecordSet.add(new String(message.getData()));
             msgReceivedCounter.incrementAndGet();
