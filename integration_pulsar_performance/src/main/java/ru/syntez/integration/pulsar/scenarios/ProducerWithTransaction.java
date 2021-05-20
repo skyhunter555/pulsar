@@ -5,10 +5,12 @@ import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.transaction.Transaction;
 import ru.syntez.integration.pulsar.config.PulsarConfig;
 import ru.syntez.integration.pulsar.entities.DataSizeEnum;
+import ru.syntez.integration.pulsar.entities.ResultReport;
 import ru.syntez.integration.pulsar.entities.RoutingDocument;
 import ru.syntez.integration.pulsar.sender.PulsarSender;
 import ru.syntez.integration.pulsar.usecases.create.ProducerCreatorUsecase;
 
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,15 +28,19 @@ public class ProducerWithTransaction implements ProducerTestScenario {
         this.config = config;
     }
 
+    //TODO
     @Override
-    public int run(String topicName, DataSizeEnum size, String producerId) {
-        return 0;
+    public ResultReport run(String topicName, DataSizeEnum size, String producerId) {
+        return new ResultReport(producerId, true, new Date(), new Date(), 0);
+
     }
 
+    //TODO
     @Override
-    public int run(String topicName, Transaction txn, String producerId) {
+    public ResultReport run(String topicName, Transaction txn, String producerId) {
         try (Producer<byte[]> producer = ProducerCreatorUsecase.execute(client, topicName, producerId)) {
             PulsarSender sender = new PulsarSender(producer);
+            Date startDateTime = new Date();
             int sentCount = sender.sendWithDocData(
                     RoutingDocument::createAny,
                     config.getMessageCount(),
@@ -42,10 +48,10 @@ public class ProducerWithTransaction implements ProducerTestScenario {
                     config.getRecordLogOutputEnabled()
             );
             producer.flush();
-            return sentCount;
+            return new ResultReport(producerId, true, startDateTime, new Date(), sentCount);
         } catch (Exception e) {
             LOG.log(Level.SEVERE, "Error producing documents to pulsar", e);
-            return 0;
+            return new ResultReport(producerId, true, new Date(), new Date(), 0);
         }
     }
 

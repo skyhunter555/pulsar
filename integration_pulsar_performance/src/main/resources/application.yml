@@ -1,12 +1,35 @@
 #default config value
 brokersUrl: "pulsar://192.168.56.101"
 brokerPort: "6650"
-messageCount: 100
+messageCount: 1000
 timeoutBeforeConsume: 1
+timeoutReceive: 2
 maxRedeliveryCount: 5
 recordLogOutputEnabled: false
 operationTimeoutSeconds: 3
 connectTimeoutSeconds: 3
 
-topicName: "persistent://public/namespace-demo/topic-part6-demo"
+topic1Name: "persistent://public/namespace-demo/topic-part1-demo"
+topic10Name: "persistent://public/namespace-demo/topic-part10-demo"
+topic100Name: "persistent://public/namespace-demo/topic-part100-demo"
+topic1000Name: "persistent://public/namespace-demo/topic-part1000-demo"
 topicDeadLetterName: "persistent://public/default/topic-output-retry"
+
+kafka:
+  brokers: "localhost:9091,localhost:9092,localhost:9093"
+  messageCount: 1000
+  topicName: "demo"
+  groupIdConfig: "consumerGroup"
+  consumer:
+    offsetResetLatest: "latest"
+    offsetResetEarlier: "earliest"
+    maxPoolRecords: 50
+    clientId: "client1"
+    clientRack: "rackId"
+    partitionAssignmentStrategy: "org.apache.kafka.clients.consumer.CooperativeStickyAssignor"
+  producer:
+    acks: "all"
+    retries: 3
+    requestTimeoutMs: 230
+    lingerMs: 20
+    deliveryTimeoutMs: 1000

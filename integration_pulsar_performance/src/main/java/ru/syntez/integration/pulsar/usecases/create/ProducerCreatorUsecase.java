@@ -33,7 +33,7 @@ public class ProducerCreatorUsecase {
                 .compressionType(CompressionType.LZ4)
                 .create();
 
-        LOG.info(String.format("Producer created: ID=%s; TOPIC=%s.", producer.getProducerName(), topicName));
+       // LOG.info(String.format("Producer created: ID=%s; TOPIC=%s.", producer.getProducerName(), topicName));
 
         return producer;
     }

@@ -13,45 +13,46 @@ import ru.syntez.integration.pulsar.usecases.StartConsumerUsecase;
 import ru.syntez.integration.pulsar.usecases.create.ConsumerCreatorUsecase;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.*;
+import java.util.logging.Logger;
 
 /**
- * Запуск обработки для проверки производительности 10 продьюсеров и консьюмеров
+ * Запуск обработки для проверки производительности для заданного количества продьюсеров и с заданным объемом сообщения
  *
  * @author Skyhunter
  * @date 19.05.2021
  */
-public class Run10TestUsecase {
+public class RunTestUsecase {
 
-    // private static Map msgSentCounter = new ConcurrentHashMap<>();
-    // private static Map recordSetMap = new ConcurrentHashMap<>();
+    private final static Logger LOG = Logger.getLogger(ru.syntez.integration.pulsar.usecases.run.RunTestUsecase.class.getName());
 
     public static void execute(
             PulsarConfig config,
-            PulsarClient client
+            PulsarClient client,
+            int producerCount,
+            DataSizeEnum dataSize
     ) throws InterruptedException, ExecutionException {
 
-        ExecutorService executorService = Executors.newFixedThreadPool(20);
+        LOG.info(String.format("******************** Запуск пересылки сообщений от %s продюсеров с размером сообщений = %s ...", producerCount, dataSize.getDescription()));
+
+        ExecutorService executorService = Executors.newFixedThreadPool(producerCount * 2);
 
         List<Future<ResultReport>> promiseList = new ArrayList<>();
 
-        for (int index = 0; index < 10; index++) {
+        String topicName = getTopicName(config, dataSize);
+
+        for (int index = 0; index < 1; index++) {
             final String consumerId = String.format("consumer_%s", index);
             promiseList.add(executorService.submit(new Callable() {
                 public Object call() throws Exception {
                     try {
                         Consumer consumer = ConsumerCreatorUsecase.execute(
-                                client, config, config.getTopicName(), consumerId,
-                                String.format("%s_%s", DataSizeEnum.SIZE_1_KB, consumerId));
-                        Date startDateTime = new Date();
-                        Integer resultCount = StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled());
-                        Date endDateTime = new Date();
-                        //recordSetMap.put(consumerId, StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled()));
+                                client, config, topicName, consumerId,
+                                String.format("%s_%s", dataSize, consumerId));
+                        ResultReport result = StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled(), config.getTimeoutReceive());
                         consumer.close();
-                        return new ResultReport(consumerId, false, startDateTime, endDateTime, resultCount);
+                        return result;
                     } catch (PulsarClientException | InterruptedException e) {
                         e.printStackTrace();
                         return null;
@@ -60,30 +61,20 @@ public class Run10TestUsecase {
             }));
         }
 
-        for (int index = 0; index < 10; index++) {
+        for (int index = 0; index < producerCount; index++) {
             final String producerId = String.format("producer_%s", index);
             promiseList.add(executorService.submit(new Callable() {
                 public Object call() throws Exception {
                     ProducerTestScenario testScenario = new ProducerWithSizeData(client, config);
-                    Date startDateTime = new Date();
-                    Integer resultCount = testScenario.run(config.getTopicName(), DataSizeEnum.SIZE_1_KB, producerId);
-                    Date endDateTime = new Date();
-                    return new ResultReport(producerId, false, startDateTime, endDateTime, resultCount);
-                    //msgSentCounter.put(producerId, testScenario.run(config.getTopicName(), DataSizeEnum.SIZE_1_KB, producerId));
+                    return testScenario.run(topicName, dataSize, producerId);
                 }
             }));
-
-            // executorService.execute(() -> {
-            //     ProducerTestScenario testScenario = new ProducerWithSizeData(client, config);
-            //     msgSentCounter.put(producerId, testScenario.run(config.getTopicName(), DataSizeEnum.SIZE_1_KB, producerId));
-            // });
         }
 
         // ожидание пока executor service не закончит выполнение всех future тасков
         while (true) {
             if (isDone(promiseList)) {
-                //System.out.println("Done");
-                ResultOutputUsecase.execute(getResult(promiseList));
+                ResultOutputUsecase.execute(getResult(promiseList), producerCount, config.getTimeoutReceive());
                 executorService.shutdown();
                 return;
             }
@@ -113,5 +104,17 @@ public class Run10TestUsecase {
             }
         }
         return resultList;
+    }
+
+    private static String getTopicName(PulsarConfig config, DataSizeEnum dataSize) {
+        if (dataSize.equals(DataSizeEnum.SIZE_1_KB)) {
+            return config.getTopic1Name();
+        } else if (dataSize.equals(DataSizeEnum.SIZE_10_KB)) {
+            return config.getTopic10Name();
+        } else if (dataSize.equals(DataSizeEnum.SIZE_100_KB)) {
+            return config.getTopic100Name();
+        } else if (dataSize.equals(DataSizeEnum.SIZE_1_MB)) {
+            return config.getTopic1000Name();
+        } else return "";
     }
 }

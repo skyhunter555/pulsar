@@ -4,10 +4,12 @@ import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.transaction.Transaction;
+import ru.syntez.integration.pulsar.entities.ResultReport;
 import ru.syntez.integration.pulsar.entities.RoutingDocument;
 import ru.syntez.integration.pulsar.exceptions.TestMessageException;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -32,20 +34,21 @@ public class StartConsumerUsecase {
      * @return
      * @throws PulsarClientException
      */
-    public static Integer execute(
+    public static ResultReport execute(
             Consumer<byte[]> consumer,
-            boolean recordLogOutputEnabled
+            boolean recordLogOutputEnabled,
+            int timeoutReceiveSeconds
     ) throws PulsarClientException, InterruptedException {
 
         AtomicInteger msgReceivedCounter = new AtomicInteger(0);
-
+        Date startDateTime = new Date();
         while (true) {
-            Message message = consumer.receive(10, TimeUnit.SECONDS);
+            Message message = consumer.receive(timeoutReceiveSeconds, TimeUnit.SECONDS);
             if (message == null) {
-                LOG.info("No message to consume after waiting for 10 seconds.");
+               // LOG.info(String.format("No message to consume after waiting for %s seconds.", timeoutReceiveSeconds));
                 break;
             }
-            consumer.acknowledge(message);
+            consumer.acknowledge(message.getMessageId());
             msgReceivedCounter.incrementAndGet();
             if (recordLogOutputEnabled) {
                 LOG.info(
@@ -59,7 +62,7 @@ public class StartConsumerUsecase {
                 ));
             }
         }
-        return msgReceivedCounter.get();
+        return new ResultReport(consumer.getConsumerName(), false, startDateTime, new Date(), msgReceivedCounter.get());
     }
 
 }

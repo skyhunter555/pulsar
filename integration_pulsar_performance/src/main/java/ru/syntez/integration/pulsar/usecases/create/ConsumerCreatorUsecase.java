@@ -40,8 +40,7 @@ public class ConsumerCreatorUsecase {
                 .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
                 .subscribe();
 
-        LOG.info(String.format("Consumer created: ID=%s; TOPIC=%s; subscriptionName=%s",
-                consumerId, topicName, subscriptionName));
+       // LOG.info(String.format("Consumer created: ID=%s; TOPIC=%s; subscriptionName=%s", consumerId, topicName, subscriptionName));
 
         return consumer;
     }

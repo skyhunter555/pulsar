@@ -1,10 +1,9 @@
 package ru.syntez.integration.pulsar;
 
 import org.apache.pulsar.client.api.PulsarClient;
-import org.apache.pulsar.client.api.transaction.Transaction;
 import org.yaml.snakeyaml.Yaml;
 import ru.syntez.integration.pulsar.config.PulsarConfig;
-import ru.syntez.integration.pulsar.usecases.StartConsumerTransactionUsecase;
+import ru.syntez.integration.pulsar.entities.DataSizeEnum;
 import ru.syntez.integration.pulsar.usecases.run.*;
 
 import java.io.InputStream;
@@ -46,15 +45,42 @@ public class IntegrationPulsarApplication {
                     .connectionTimeout(config.getConnectTimeoutSeconds(),  TimeUnit.SECONDS)
                     .build();
 
-            //кейс Транзакционная запись в несколько топиков и чтение из них.
-            LOG.info("******************** Запуск транзакционной пересылки сообщений...");
-            Run10TestUsecase.execute(config, client);
+            //1. кейс проверка обработки сообщений от 10 продюсеров
+           // RunTestUsecase.execute(config, client, 10, DataSizeEnum.SIZE_1_KB);
+           // RunTestUsecase.execute(config, client, 10, DataSizeEnum.SIZE_10_KB);
+           // RunTestUsecase.execute(config, client, 10, DataSizeEnum.SIZE_100_KB);
+           // RunTestUsecase.execute(config, client, 10, DataSizeEnum.SIZE_1_MB);
 
-            //LOG.info("******************** Запуск транзакционной пересылки сообщений и отмены транзакции...");
-            //RunTransactionAbortTestUsecase.execute(config, client);
+            //2. кейс проверка обработки сообщений от 20 продюсеров
+           //RunTestUsecase.execute(config, client, 20, DataSizeEnum.SIZE_1_KB);
+           //RunTestUsecase.execute(config, client, 20, DataSizeEnum.SIZE_10_KB);
+           //RunTestUsecase.execute(config, client, 20, DataSizeEnum.SIZE_100_KB);
+           //RunTestUsecase.execute(config, client, 20, DataSizeEnum.SIZE_1_MB);
 
-            //LOG.info("******************** Запуск транзакционного получения сообщений...");
-            //RunTransactionConsumerTestUsecase.execute(config, client);
+            //3. кейс проверка обработки сообщений от 100 продюсеров
+           // RunTestUsecase.execute(config, client, 100, DataSizeEnum.SIZE_1_KB);
+           // RunTestUsecase.execute(config, client, 100, DataSizeEnum.SIZE_10_KB);
+           // RunTestUsecase.execute(config, client, 100, DataSizeEnum.SIZE_100_KB);
+           // RunTestUsecase.execute(config, client, 100, DataSizeEnum.SIZE_1_MB);
+
+            //4. кейс проверка обработки сообщений от 200 продюсеров
+            //RunTestUsecase.execute(config, client, 200, DataSizeEnum.SIZE_1_KB);
+            //RunTestUsecase.execute(config, client, 200, DataSizeEnum.SIZE_10_KB);
+            //RunTestUsecase.execute(config, client, 200, DataSizeEnum.SIZE_100_KB);
+            //RunTestUsecase.execute(config, client, 200, DataSizeEnum.SIZE_1_MB);
+
+            //5. кейс проверка обработки сообщений от 300 продюсеров
+            //RunTestUsecase.execute(config, client, 300, DataSizeEnum.SIZE_1_KB);
+            //RunTestUsecase.execute(config, client, 300, DataSizeEnum.SIZE_10_KB);
+            //RunTestUsecase.execute(config, client, 300, DataSizeEnum.SIZE_100_KB);
+            //RunTestUsecase.execute(config, client, 300, DataSizeEnum.SIZE_1_MB);
+
+
+            //RunKafkaTestUsecase.execute(config, 10, DataSizeEnum.SIZE_1_KB);
+            RunKafkaTestUsecase.execute(config, 10, DataSizeEnum.SIZE_10_KB);
+            //RunKafkaTestUsecase.execute(config, 10, DataSizeEnum.SIZE_100_KB);
+            //RunKafkaTestUsecase.execute(config, 10, DataSizeEnum.SIZE_1_MB);
+
 
             client.shutdown();
         } catch (Exception e) {

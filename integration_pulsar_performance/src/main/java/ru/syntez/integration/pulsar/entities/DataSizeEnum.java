@@ -11,7 +11,8 @@ public enum DataSizeEnum {
     SIZE_1_KB(1,"1 kb"),
     SIZE_10_KB(10, "10 kb"),
     SIZE_100_KB(100, "100 kb"),
-    SIZE_1_MB(1024, "1 Mb");
+    SIZE_1_MB(1024, "1 Mb"),
+    SIZE_5_MB(5120, "5 Mb");
 
     private final Integer factor;
     private final String description;
