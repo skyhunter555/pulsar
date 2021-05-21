@@ -9,6 +9,7 @@ import ru.syntez.integration.pulsar.usecases.run.*;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -46,40 +47,37 @@ public class IntegrationPulsarApplication {
                     .build();
 
             //1. кейс проверка обработки сообщений от 10 продюсеров
-           // RunTestUsecase.execute(config, client, 10, DataSizeEnum.SIZE_1_KB);
-           // RunTestUsecase.execute(config, client, 10, DataSizeEnum.SIZE_10_KB);
-           // RunTestUsecase.execute(config, client, 10, DataSizeEnum.SIZE_100_KB);
-           // RunTestUsecase.execute(config, client, 10, DataSizeEnum.SIZE_1_MB);
+            //  runPulsarTest(10);
+//
+            //  //2. кейс проверка обработки сообщений от 20 продюсеров
+            //  runPulsarTest(20);
+//
+            //  //3. кейс проверка обработки сообщений от 100 продюсеров
+            //  runPulsarTest(100);
+//
+            //  //4. кейс проверка обработки сообщений от 200 продюсеров
+            //  runPulsarTest(200);
+//
+            //  //5. кейс проверка обработки сообщений от 300 продюсеров
+            //  runPulsarTest(300);
 
-            //2. кейс проверка обработки сообщений от 20 продюсеров
-           //RunTestUsecase.execute(config, client, 20, DataSizeEnum.SIZE_1_KB);
-           //RunTestUsecase.execute(config, client, 20, DataSizeEnum.SIZE_10_KB);
-           //RunTestUsecase.execute(config, client, 20, DataSizeEnum.SIZE_100_KB);
-           //RunTestUsecase.execute(config, client, 20, DataSizeEnum.SIZE_1_MB);
+            // 6. кейс проверка обработки сообщений от 100 продюсеров не персистентный топик
+            //RunNonPersistantTestUsecase.execute(config, client, 100, DataSizeEnum.SIZE_1_KB);
+            //RunNonPersistantTestUsecase.execute(config, client, 100, DataSizeEnum.SIZE_10_KB);
+            //RunNonPersistantTestUsecase.execute(config, client, 100, DataSizeEnum.SIZE_100_KB);
+            //RunNonPersistantTestUsecase.execute(config, client, 100, DataSizeEnum.SIZE_1_MB);
 
-            //3. кейс проверка обработки сообщений от 100 продюсеров
-           // RunTestUsecase.execute(config, client, 100, DataSizeEnum.SIZE_1_KB);
-           // RunTestUsecase.execute(config, client, 100, DataSizeEnum.SIZE_10_KB);
-           // RunTestUsecase.execute(config, client, 100, DataSizeEnum.SIZE_100_KB);
-           // RunTestUsecase.execute(config, client, 100, DataSizeEnum.SIZE_1_MB);
-
-            //4. кейс проверка обработки сообщений от 200 продюсеров
-            //RunTestUsecase.execute(config, client, 200, DataSizeEnum.SIZE_1_KB);
-            //RunTestUsecase.execute(config, client, 200, DataSizeEnum.SIZE_10_KB);
-            //RunTestUsecase.execute(config, client, 200, DataSizeEnum.SIZE_100_KB);
-            //RunTestUsecase.execute(config, client, 200, DataSizeEnum.SIZE_1_MB);
-
-            //5. кейс проверка обработки сообщений от 300 продюсеров
-            //RunTestUsecase.execute(config, client, 300, DataSizeEnum.SIZE_1_KB);
-            //RunTestUsecase.execute(config, client, 300, DataSizeEnum.SIZE_10_KB);
-            //RunTestUsecase.execute(config, client, 300, DataSizeEnum.SIZE_100_KB);
-            //RunTestUsecase.execute(config, client, 300, DataSizeEnum.SIZE_1_MB);
-
-
-            //RunKafkaTestUsecase.execute(config, 10, DataSizeEnum.SIZE_1_KB);
-            RunKafkaTestUsecase.execute(config, 10, DataSizeEnum.SIZE_10_KB);
-            //RunKafkaTestUsecase.execute(config, 10, DataSizeEnum.SIZE_100_KB);
-            //RunKafkaTestUsecase.execute(config, 10, DataSizeEnum.SIZE_1_MB);
+            //7. кейс проверка обработки сообщений KAFKA 10 продюсеров
+            // RunKafkaTestUsecase.execute(config, config.getKafka().getProducerCount(), DataSizeEnum.SIZE_1_KB);
+            // RunKafkaTestUsecase.execute(config, config.getKafka().getProducerCount(), DataSizeEnum.SIZE_1_KB);
+            // RunKafkaTestUsecase.execute(config, config.getKafka().getProducerCount(), DataSizeEnum.SIZE_1_KB);
+            // RunKafkaTestUsecase.execute(config, config.getKafka().getProducerCount(), DataSizeEnum.SIZE_10_KB);
+            //RunKafkaTestUsecase.execute(config, config.getKafka().getProducerCount(), DataSizeEnum.SIZE_10_KB);
+            //RunKafkaTestUsecase.execute(config, config.getKafka().getProducerCount(), DataSizeEnum.SIZE_10_KB);
+            // RunKafkaTestUsecase.execute(config, config.getKafka().getProducerCount(), DataSizeEnum.SIZE_100_KB);
+            // RunKafkaTestUsecase.execute(config, config.getKafka().getProducerCount(), DataSizeEnum.SIZE_100_KB);
+            //  RunKafkaTestUsecase.execute(config, config.getKafka().getProducerCount(), DataSizeEnum.SIZE_100_KB);
+            RunKafkaTestUsecase.execute(config, config.getKafka().getProducerCount(), DataSizeEnum.SIZE_1_MB);
 
 
             client.shutdown();
@@ -88,6 +86,13 @@ public class IntegrationPulsarApplication {
         }
         LOG.info("Проверка всех кейсов завершена.");
 
+    }
+
+    private static void runPulsarTest(Integer producerCount) throws ExecutionException, InterruptedException {
+        RunTestUsecase.execute(config, client, producerCount, DataSizeEnum.SIZE_1_KB);
+        RunTestUsecase.execute(config, client, producerCount, DataSizeEnum.SIZE_10_KB);
+        RunTestUsecase.execute(config, client, producerCount, DataSizeEnum.SIZE_100_KB);
+        RunTestUsecase.execute(config, client, producerCount, DataSizeEnum.SIZE_1_MB);
     }
 
 }
