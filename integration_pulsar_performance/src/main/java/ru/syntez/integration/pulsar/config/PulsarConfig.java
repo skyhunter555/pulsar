@@ -21,6 +21,7 @@ public class PulsarConfig {
     private String topic100Name;
     private String topic1000Name;
     private String topicDeadLetterName;
+    private String topicNonPersistentName;
 
     private KafkaConfig kafka;
 }

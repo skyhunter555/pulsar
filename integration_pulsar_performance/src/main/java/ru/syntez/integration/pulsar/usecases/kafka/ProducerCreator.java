@@ -20,13 +20,14 @@ public class ProducerCreator {
         props.put(ProducerConfig.ACKS_CONFIG, kafkaConfig.getProducer().getAcks());
         props.put(ProducerConfig.RETRIES_CONFIG, kafkaConfig.getProducer().getRetries());
         props.put(ProducerConfig.LINGER_MS_CONFIG, kafkaConfig.getProducer().getLingerMs());
+       // props.put(ProducerConfig.BATCH_SIZE_CONFIG, kafkaConfig.getProducer().getBatchSize());
         props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, kafkaConfig.getProducer().getRequestTimeoutMs());
         props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, kafkaConfig.getProducer().getDeliveryTimeoutMs());
 
         //props.put(ProducerConfig.PARTITIONER_CLASS_CONFIG, CustomPartitioner.class.getName());
 
         //Для второго кейса
-        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+        //props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
 
         return new KafkaProducer<>(props);
     }

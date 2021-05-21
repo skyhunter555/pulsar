@@ -4,9 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ru.syntez</groupId>
-    <artifactId>integration-pulsar-transaction</artifactId>
+    <artifactId>integration-pulsar-performance</artifactId>
     <version>1.0.0</version>
-    <name>integration-pulsar-transaction</name>
+    <name>integration-pulsar-performance</name>
     <description>test pulsar</description>
 
     <properties>

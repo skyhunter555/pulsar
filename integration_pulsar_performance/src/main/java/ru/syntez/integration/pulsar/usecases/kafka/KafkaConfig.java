@@ -6,6 +6,7 @@ import lombok.Data;
 public class KafkaConfig {
 
     private String  brokers;
+    private Integer producerCount;
     private Integer messageCount;
     private String  topicName;
     private String  groupIdConfig;

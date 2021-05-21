@@ -28,7 +28,7 @@ public class ResultOutputUsecase {
         LOG.info(String.format("Количество всех принятых сообщений: %s", msgReceived));
         LOG.info(String.format("Начало отправки сообщений: %s", new Date(startDateTimeMin)));
         LOG.info(String.format("Завершение отправки сообщений: %s", new Date(endDateTimeMax)));
-        LOG.info(String.format("Общее время обработки сообщений: %s ms", endDateTimeMax - startDateTimeMin - (timeOutSeconds * 1000L)));
+        LOG.info(String.format("Общее время обработки сообщений: %s ms", endDateTimeMax - startDateTimeMin));
     }
 
 }

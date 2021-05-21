@@ -41,13 +41,13 @@ public class RunKafkaTestUsecase {
 
         List<Future<ResultReport>> promiseList = new ArrayList<>();
 
-        for (int index = 0; index < producerCount; index++) {
-            final String consumerId = String.format("consumer_%s", index);
+        //for (int index = 0; index < producerCount; index++) {
+        //    final String consumerId = String.format("consumer_%s", index);
             promiseList.add(executorService.submit(new Callable() {
                 public Object call() throws Exception {
                     try {
-                        Consumer consumer = ConsumerCreator.createConsumer(config.getKafka(), String.format("%s_%s", dataSize, consumerId));
-                        ResultReport result = StartKafkaConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled(), config.getKafka().getMessageCount());
+                        Consumer consumer = ConsumerCreator.createConsumer(config.getKafka(), String.format("%s_%s", dataSize, "consumerId"));
+                        ResultReport result = StartKafkaConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled(), config.getKafka().getMessageCount() * producerCount);
                         consumer.close();
                         return result;
                     } catch (Exception e) {
@@ -56,7 +56,7 @@ public class RunKafkaTestUsecase {
                     }
                 }
             }));
-        }
+        //}
 
         StringBuffer docData = new StringBuffer();
         for (int index = 0; index < dataSize.getFactor(); index++) {
@@ -77,7 +77,7 @@ public class RunKafkaTestUsecase {
                                 config.getRecordLogOutputEnabled()
                         );
                     }
-                    return new ResultReport(producerId, true, startDateTime, new Date(), config.getMessageCount());
+                    return new ResultReport(producerId, true, startDateTime, new Date(), config.getKafka().getMessageCount());
                 }
             }));
         }
