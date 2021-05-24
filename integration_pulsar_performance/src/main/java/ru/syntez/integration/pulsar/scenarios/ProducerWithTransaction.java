@@ -10,6 +10,7 @@ import ru.syntez.integration.pulsar.entities.RoutingDocument;
 import ru.syntez.integration.pulsar.sender.PulsarSender;
 import ru.syntez.integration.pulsar.usecases.create.ProducerCreatorUsecase;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -31,7 +32,7 @@ public class ProducerWithTransaction implements ProducerTestScenario {
     //TODO
     @Override
     public ResultReport run(String topicName, DataSizeEnum size, String producerId) {
-        return new ResultReport(producerId, true, new Date(), new Date(), 0);
+        return new ResultReport(producerId, true, new Date(), new Date(), 0, BigDecimal.ZERO, BigDecimal.ZERO);
 
     }
 
@@ -48,10 +49,10 @@ public class ProducerWithTransaction implements ProducerTestScenario {
                     config.getRecordLogOutputEnabled()
             );
             producer.flush();
-            return new ResultReport(producerId, true, startDateTime, new Date(), sentCount);
+            return new ResultReport(producerId, true, startDateTime, new Date(), sentCount, BigDecimal.ZERO, BigDecimal.ZERO);
         } catch (Exception e) {
             LOG.log(Level.SEVERE, "Error producing documents to pulsar", e);
-            return new ResultReport(producerId, true, new Date(), new Date(), 0);
+            return new ResultReport(producerId, true, new Date(), new Date(), 0, BigDecimal.ZERO, BigDecimal.ZERO);
         }
     }
 

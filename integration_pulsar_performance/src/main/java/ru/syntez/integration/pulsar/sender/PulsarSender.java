@@ -5,6 +5,7 @@ import ru.syntez.integration.pulsar.entities.DataSizeEnum;
 import ru.syntez.integration.pulsar.entities.RoutingDocument;
 import ru.syntez.integration.pulsar.usecases.SerializeDocumentUsecase;
 
+import java.util.Date;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;

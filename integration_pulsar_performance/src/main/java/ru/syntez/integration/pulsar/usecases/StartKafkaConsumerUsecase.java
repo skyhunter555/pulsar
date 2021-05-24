@@ -8,6 +8,7 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import ru.syntez.integration.pulsar.entities.ResultReport;
 import ru.syntez.integration.pulsar.usecases.kafka.ConsumerCreator;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.Date;
 import java.util.HashSet;
@@ -41,13 +42,13 @@ public class StartKafkaConsumerUsecase {
         AtomicInteger msgReceivedCounter = new AtomicInteger(0);
         Date startDateTime = new Date();
         while (msgReceivedCounter.get() < messageCount) {
-
             ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(1));
 
             for (ConsumerRecord<String, String> record : records) {
+                //record.timestamp();
                 msgReceivedCounter.incrementAndGet();
                 if (recordLogOutputEnabled) {
-                    LOG.info(String.format("Consumer read record key=%s, number=%s, value=%s, partition=%s, offset = %s",
+                    LOG.info(String.format("Consumer read record key=%s, number=%s, value=%s, partition=%s, offset = %s, ",
                             record.key(),
                             msgReceivedCounter.get(),
                             record.value(),
@@ -58,7 +59,7 @@ public class StartKafkaConsumerUsecase {
             }
             consumer.commitSync();
         }
-        return new ResultReport("kafkaConsumer", false, startDateTime, new Date(), msgReceivedCounter.get());
+        return new ResultReport("kafkaConsumer", false, startDateTime, new Date(), msgReceivedCounter.get(), BigDecimal.ZERO, BigDecimal.ZERO);
     }
 
 }

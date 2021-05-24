@@ -50,7 +50,11 @@ public class RunTestUsecase {
                         Consumer consumer = ConsumerCreatorUsecase.execute(
                                 client, config, topicName, consumerId,
                                 String.format("%s_%s", dataSize, consumerId));
-                        ResultReport result = StartConsumerUsecase.execute(consumer, config.getRecordLogOutputEnabled(), config.getTimeoutReceive());
+                        ResultReport result = StartConsumerUsecase.execute(
+                                consumer, config.getRecordLogOutputEnabled(),
+                                config.getTimeoutReceive(),
+                                config.getCalculateLatency()
+                        );
                         consumer.close();
                         return result;
                     } catch (PulsarClientException | InterruptedException e) {

@@ -15,6 +15,7 @@ public class PulsarConfig {
     private Boolean recordLogOutputEnabled;
     private Integer operationTimeoutSeconds;
     private Integer connectTimeoutSeconds;
+    private Boolean calculateLatency;
 
     private String topic1Name;
     private String topic10Name;

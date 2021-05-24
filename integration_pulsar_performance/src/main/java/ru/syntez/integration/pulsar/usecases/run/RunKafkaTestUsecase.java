@@ -13,6 +13,7 @@ import ru.syntez.integration.pulsar.usecases.StartKafkaConsumerUsecase;
 import ru.syntez.integration.pulsar.usecases.kafka.ConsumerCreator;
 import ru.syntez.integration.pulsar.usecases.kafka.ProducerCreator;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.Level;
@@ -77,7 +78,7 @@ public class RunKafkaTestUsecase {
                                 config.getRecordLogOutputEnabled()
                         );
                     }
-                    return new ResultReport(producerId, true, startDateTime, new Date(), config.getKafka().getMessageCount());
+                    return new ResultReport(producerId, true, startDateTime, new Date(), config.getKafka().getMessageCount(), BigDecimal.ZERO, BigDecimal.ZERO);
                 }
             }));
         }

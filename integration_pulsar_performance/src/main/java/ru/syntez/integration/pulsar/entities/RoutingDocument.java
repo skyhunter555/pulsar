@@ -6,6 +6,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * RoutingDocument model
@@ -21,7 +22,7 @@ public class RoutingDocument implements Serializable {
     private DocumentTypeEnum docType;
     private int docId;
     private String docData;
-
+    private long docTime;
     /**
      * Для кейсов фильтрации и маршрутизации:
      * В зависимости от идентификатора тип документа может быть разным
@@ -32,6 +33,7 @@ public class RoutingDocument implements Serializable {
         final RoutingDocument document = new RoutingDocument();
         document.setDocId(id);
         document.setDocData(docData);
+        document.setDocTime(new Date().getTime());
         if ((id % 2) == 0) {
             document.setDocType(DocumentTypeEnum.order);
         } else {
